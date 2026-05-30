@@ -1,0 +1,8 @@
+.metals/
+.scala-build/
+.bsp/
+.cursor/
+.vscode/
+*.log
+data/
+*.jar

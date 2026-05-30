@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1e40af">
+  <title>PayTo Bank</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icons/icon.svg">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>PayTo Bank</h1>
+      <p class="balance">Balance: <strong id="balance">—</strong></p>
+      <p class="my-iban">Your IBAN: <strong id="my-iban">—</strong></p>
+    </header>
+
+    <main id="home">
+      <p class="hint">Open a <code>payto://</code> link or scan an NFC tag to pay from your account.</p>
+      <div class="actions">
+        <button id="btn-nfc-read">Scan NFC tag</button>
+        <button id="btn-demo" class="secondary">Try demo payment</button>
+      </div>
+      <p id="nfc-status" class="status"></p>
+    </main>
+
+    <main id="payment" hidden>
+      <div class="card">
+        <h2>Confirm payment</h2>
+        <dl>
+          <dt>To (IBAN)</dt><dd id="f-iban">—</dd>
+          <dt>BIC</dt><dd id="f-bic">—</dd>
+          <dt>Amount</dt><dd id="f-amount">—</dd>
+          <dt>Recipient</dt><dd id="f-receiver">—</dd>
+          <dt>Message</dt><dd id="f-message">—</dd>
+        </dl>
+        <ul id="errors" class="errors"></ul>
+        <div class="actions">
+          <button id="btn-pay">Pay now</button>
+          <button id="btn-cancel" class="secondary">Cancel</button>
+        </div>
+      </div>
+    </main>
+
+    <main id="success" hidden>
+      <div class="card success-card">
+        <h2>Payment sent</h2>
+        <p id="success-text"></p>
+        <button id="btn-done">Done</button>
+      </div>
+    </main>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>

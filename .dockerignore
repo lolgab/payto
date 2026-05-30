@@ -1,0 +1,7 @@
+.metals
+.scala-build
+.bsp
+.vscode
+.cursor
+payto.jar
+data
