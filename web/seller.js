@@ -16,6 +16,10 @@ function fmtCents(c) {
   });
 }
 
+function fmtIban(iban) {
+  return iban.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim();
+}
+
 function show(name) {
   for (const id of ['screen-input', 'screen-nfc', 'screen-done']) {
     $(id).hidden = id !== name;
@@ -85,6 +89,8 @@ function startPolling() {
 function showPaymentReceived(data) {
   stopPolling();
   $('done-amount').textContent = fmtCents(Math.round(data.amount * 100));
+  $('done-from-name').textContent = data.fromName || '—';
+  $('done-from-iban').textContent = data.fromIban ? fmtIban(data.fromIban) : '—';
   show('screen-done');
 }
 

@@ -13,11 +13,15 @@
   --shadow: 0 2px 12px rgba(13, 59, 102, 0.08);
 }
 
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   background: var(--bg);
   color: var(--text);
-  min-height: 100vh;
   touch-action: manipulation;
   -webkit-font-smoothing: antialiased;
 }
@@ -25,13 +29,16 @@ body {
 .pos {
   max-width: 380px;
   margin: 0 auto;
-  min-height: 100vh;
+  height: 100%;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   background: var(--bg);
+  overflow: hidden;
 }
 
 .pos-header {
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -68,14 +75,28 @@ body {
   white-space: nowrap;
 }
 
-.pos-screen {
+.pos-body {
   flex: 1;
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pos-screen {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   padding: 1.25rem;
+  overflow: hidden;
+}
+
+.pos-screen[hidden] {
+  display: none !important;
 }
 
 .pos-label {
+  flex-shrink: 0;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -85,6 +106,7 @@ body {
 }
 
 .pos-display {
+  flex-shrink: 0;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -103,14 +125,14 @@ body {
 }
 
 .pos-keypad {
+  flex: 1;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0.55rem;
-  flex: 1;
+  min-height: 0;
 }
 
 .key {
-  aspect-ratio: 1.6;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--surface);
@@ -127,6 +149,7 @@ body {
 .key-fn { color: var(--text-muted); font-size: 1.2rem; font-weight: 500; }
 
 .pos-enter {
+  flex-shrink: 0;
   margin-top: 1rem;
   width: 100%;
   padding: 1.1rem;
@@ -144,7 +167,7 @@ body {
 .pos-enter:active:not(:disabled) { background: #0052a3; }
 
 .pos-cancel {
-  margin-top: 1.5rem;
+  margin-top: auto;
   width: 100%;
   padding: 0.85rem;
   border: 1px solid var(--border);
@@ -168,6 +191,7 @@ body {
   border-radius: 16px;
   padding: 2rem 1.5rem;
   box-shadow: var(--shadow);
+  min-height: 0;
 }
 
 .nfc-icon {
@@ -219,6 +243,30 @@ body {
   font-weight: 700;
   color: var(--success);
   font-variant-numeric: tabular-nums;
+}
+
+.done-payer {
+  margin-top: 0.25rem;
+  padding: 1rem 1.25rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 18rem;
+}
+
+.done-from-name {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+}
+
+.done-from-iban {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  word-break: break-all;
 }
 
 .done-hint {

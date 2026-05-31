@@ -23,52 +23,58 @@
       <span id="shop-name" class="pos-shop">—</span>
     </header>
 
-    <section id="screen-input" class="pos-screen">
-      <p class="pos-label">Importo da incassare</p>
-      <div class="pos-display">
-        <span id="amount-display" class="pos-amount">€ 0,00</span>
-      </div>
-      <div class="pos-keypad">
-        <button class="key" data-key="7">7</button>
-        <button class="key" data-key="8">8</button>
-        <button class="key" data-key="9">9</button>
-        <button class="key" data-key="4">4</button>
-        <button class="key" data-key="5">5</button>
-        <button class="key" data-key="6">6</button>
-        <button class="key" data-key="1">1</button>
-        <button class="key" data-key="2">2</button>
-        <button class="key" data-key="3">3</button>
-        <button class="key key-fn" data-key="clear">C</button>
-        <button class="key" data-key="0">0</button>
-        <button class="key key-fn" data-key="back">⌫</button>
-      </div>
-      <button id="btn-enter" class="pos-enter" disabled>Conferma</button>
-    </section>
-
-    <section id="screen-nfc" class="pos-screen" hidden>
-      <div class="nfc-panel">
-        <div class="nfc-icon" aria-hidden="true">
-          <svg viewBox="0 0 64 64" width="80" height="80">
-            <circle cx="32" cy="32" r="28" fill="none" stroke="currentColor" stroke-width="2" opacity="0.3"/>
-            <circle cx="32" cy="32" r="20" fill="none" stroke="currentColor" stroke-width="2" opacity="0.5"/>
-            <circle cx="32" cy="32" r="12" fill="none" stroke="currentColor" stroke-width="2" opacity="0.7"/>
-            <circle cx="32" cy="32" r="4" fill="currentColor"/>
-          </svg>
+    <div class="pos-body">
+      <section id="screen-input" class="pos-screen">
+        <p class="pos-label">Importo da incassare</p>
+        <div class="pos-display">
+          <span id="amount-display" class="pos-amount">€ 0,00</span>
         </div>
-        <p id="nfc-amount" class="nfc-amount">€ 0,00</p>
-        <p id="nfc-status" class="nfc-status">Avvicina il telefono del cliente — PayTo apparirà tra le app disponibili</p>
-        <button id="btn-cancel" class="pos-cancel">Annulla</button>
-      </div>
-    </section>
+        <div class="pos-keypad">
+          <button class="key" data-key="7">7</button>
+          <button class="key" data-key="8">8</button>
+          <button class="key" data-key="9">9</button>
+          <button class="key" data-key="4">4</button>
+          <button class="key" data-key="5">5</button>
+          <button class="key" data-key="6">6</button>
+          <button class="key" data-key="1">1</button>
+          <button class="key" data-key="2">2</button>
+          <button class="key" data-key="3">3</button>
+          <button class="key key-fn" data-key="clear">C</button>
+          <button class="key" data-key="0">0</button>
+          <button class="key key-fn" data-key="back">⌫</button>
+        </div>
+        <button id="btn-enter" class="pos-enter" disabled>OK</button>
+      </section>
 
-    <section id="screen-done" class="pos-screen done-screen" hidden>
-      <div class="done-panel">
-        <p class="done-check">✓</p>
-        <p class="done-title">Pagamento ricevuto</p>
-        <p id="done-amount" class="done-amount">€ 0,00</p>
-        <p class="done-hint">Tocca lo schermo per una nuova vendita</p>
-      </div>
-    </section>
+      <section id="screen-nfc" class="pos-screen" hidden>
+        <div class="nfc-panel">
+          <div class="nfc-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" width="80" height="80">
+              <circle cx="32" cy="32" r="28" fill="none" stroke="currentColor" stroke-width="2" opacity="0.3"/>
+              <circle cx="32" cy="32" r="20" fill="none" stroke="currentColor" stroke-width="2" opacity="0.5"/>
+              <circle cx="32" cy="32" r="12" fill="none" stroke="currentColor" stroke-width="2" opacity="0.7"/>
+              <circle cx="32" cy="32" r="4" fill="currentColor"/>
+            </svg>
+          </div>
+          <p id="nfc-amount" class="nfc-amount">€ 0,00</p>
+          <p id="nfc-status" class="nfc-status">Avvicina il telefono del cliente — PayTo apparirà tra le app disponibili</p>
+          <button id="btn-cancel" class="pos-cancel">Annulla pagamento</button>
+        </div>
+      </section>
+
+      <section id="screen-done" class="pos-screen done-screen" hidden>
+        <div class="done-panel">
+          <p class="done-check">✓</p>
+          <p class="done-title">Pagamento ricevuto</p>
+          <p id="done-amount" class="done-amount">€ 0,00</p>
+          <div class="done-payer">
+            <p id="done-from-name" class="done-from-name">—</p>
+            <p id="done-from-iban" class="done-from-iban">—</p>
+          </div>
+          <p class="done-hint">Tocca lo schermo per una nuova vendita</p>
+        </div>
+      </section>
+    </div>
   </div>
   <script src="/seller.js"></script>
 </body>

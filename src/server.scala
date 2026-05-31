@@ -47,10 +47,12 @@ object Main extends IOApp.Simple:
     sql"select coalesce(max(id), 0) from transfers where to_iban = $text".query(integer)
 
   private val findPaymentAfter =
-    sql"""select id, from_iban, amount from transfers
-          where to_iban = $text and id > $integer and amount = $real
-          order by id asc limit 1"""
-      .query(integer *: text *: real *: nil)
+    sql"""select t.id, t.from_iban, t.amount, coalesce(a.name, '')
+          from transfers t
+          left join accounts a on a.iban = t.from_iban
+          where t.to_iban = $text and t.id > $integer and t.amount = $real
+          order by t.id asc limit 1"""
+      .query(integer *: text *: real *: text *: nil)
 
   def run: IO[Unit] =
     Database.open[IO]("data/payto.db").use { db =>
@@ -159,8 +161,8 @@ object Main extends IOApp.Simple:
       case None => BadRequest(jsonErr("Parametro importo mancante"))
       case Some(amt) =>
         db.option(findPaymentAfter, (sellerIban, after, amt)).flatMap {
-          case Some((id, from, paid)) =>
-            Ok(s"""{"paid":true,"id":$id,"fromIban":"$from","amount":$paid}""")
+          case Some((id, from, paid, name)) =>
+            Ok(s"""{"paid":true,"id":$id,"fromIban":"$from","fromName":"${esc(name)}","amount":$paid}""")
           case None => Ok("""{"paid":false}""")
         }
 
