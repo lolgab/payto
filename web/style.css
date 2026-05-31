@@ -132,8 +132,14 @@ body {
 
 /* --- Screens --- */
 
+.screen[hidden] {
+  display: none !important;
+}
+
 .screen {
   padding: 0 1rem;
+  position: relative;
+  z-index: 1;
 }
 
 .info-card,
@@ -198,6 +204,8 @@ body {
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition: background 0.15s, transform 0.1s;
 }
 

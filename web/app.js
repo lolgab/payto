@@ -60,6 +60,20 @@ function parsePayto(uri) {
 const $ = (id) => document.getElementById(id);
 const screens = ['home', 'payment', 'success'];
 let me = null;
+let appReady = false;
+let paying = false;
+let paymentErrors = [];
+const pendingLaunches = [];
+
+async function apiFetch(url, opts = {}) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    return await fetch(url, { credentials: 'same-origin', signal: ctrl.signal, ...opts });
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 function show(name) {
   screens.forEach((s) => { $(s).hidden = s !== name; });
@@ -80,14 +94,15 @@ function fmtMoney(amount, currency) {
 }
 
 async function loadMe() {
-  const res = await fetch('/api/me');
+  const res = await apiFetch('/api/me');
+  if (!res.ok) throw new Error('Impossibile caricare il conto');
   me = await res.json();
   $('balance').textContent = fmtMoney(me.balance, me.currency);
   $('my-iban').textContent = fmtIban(me.iban);
 }
 
 async function lookupRecipient(iban) {
-  const res = await fetch('/api/account?iban=' + encodeURIComponent(iban));
+  const res = await apiFetch('/api/account?iban=' + encodeURIComponent(iban));
   if (!res.ok) return null;
   return res.json();
 }
@@ -113,11 +128,26 @@ function showPayment(p) {
     });
   }
 
+  paymentErrors = errors;
   $('errors').innerHTML = errors.map((e) => '<li>' + e + '</li>').join('');
-  $('btn-pay').disabled = errors.length > 0;
+  refreshPayButton();
 
   show('payment');
   window._payment = p;
+  if (errors.length) $('errors').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+function refreshPayButton() {
+  const btn = $('btn-pay');
+  if (!btn) return;
+  if (!appReady) {
+    btn.disabled = true;
+    btn.textContent = 'Caricamento…';
+    return;
+  }
+  if (paying) return;
+  btn.textContent = 'Paga ora';
+  btn.disabled = paymentErrors.length > 0;
 }
 
 function handleUri(raw) {
@@ -147,42 +177,120 @@ function tryLaunch(raw) {
   if (uri) handleUri(uri);
 }
 
+function showPayError(msg) {
+  paymentErrors = [msg];
+  $('errors').innerHTML = '<li>' + msg + '</li>';
+  $('errors').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  refreshPayButton();
+}
+
 async function doPay() {
+  if (paying || !appReady) return;
   const p = window._payment;
-  const res = await fetch('/api/pay', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      toIban: p.iban,
-      amount: p.amount.value,
-      message: p.message || '',
-    }),
-  });
-  const data = await res.json();
-  if (!res.ok || !data.ok) {
-    $('errors').innerHTML = '<li>' + (data.error || 'Pagamento non riuscito') + '</li>';
+  if (!p?.iban || !p.amount) {
+    showPayError('Pagamento non valido — riapri il link payto');
     return;
   }
-  me.balance = data.balance;
-  $('balance').textContent = fmtMoney(me.balance, me.currency);
-  const msg = p.message ? ' — "' + p.message + '"' : '';
-  $('success-text').textContent =
-    'Hai inviato ' + p.amount.formatted + ' ' + p.amount.currency +
-    ' a ' + fmtIban(p.iban) + msg + '.';
-  show('success');
+
+  const btn = $('btn-pay');
+  paying = true;
+  btn.disabled = true;
+  btn.textContent = 'Invio…';
+
+  try {
+    const res = await apiFetch('/api/pay', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        toIban: p.iban,
+        amount: p.amount.value,
+        message: p.message || '',
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      showPayError(data.error || 'Pagamento non riuscito');
+      return;
+    }
+    me.balance = data.balance;
+    $('balance').textContent = fmtMoney(me.balance, me.currency);
+    const msg = p.message ? ' — "' + p.message + '"' : '';
+    $('success-text').textContent =
+      'Hai inviato ' + p.amount.formatted + ' ' + p.amount.currency +
+      ' a ' + fmtIban(p.iban) + msg + '.';
+    show('success');
+  } catch (e) {
+    const msg = e.name === 'AbortError'
+      ? 'Server non raggiungibile — controlla la connessione'
+      : (e.message || 'Pagamento non riuscito');
+    showPayError(msg);
+  } finally {
+    paying = false;
+    refreshPayButton();
+  }
+}
+
+function goHome() {
+  window._payment = null;
+  paymentErrors = [];
+  paying = false;
+  show('home');
+  $('errors').innerHTML = '';
+  $('home-status').textContent = '';
+  history.replaceState(null, '', '/');
+}
+
+function onAppClick(e) {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  switch (btn.id) {
+    case 'btn-demo':
+      handleUri('payto://iban/DE75512108001245126199?amount=EUR:42.50&message=Caff%C3%A8&receiver-name=Negozio+Demo');
+      break;
+    case 'btn-pay':
+      e.preventDefault();
+      doPay();
+      break;
+    case 'btn-cancel':
+    case 'btn-done':
+      goHome();
+      break;
+  }
+}
+
+function flushLaunches() {
+  tryLaunch(location.href);
+  for (const url of pendingLaunches) tryLaunch(url);
+  pendingLaunches.length = 0;
+}
+
+async function boot() {
+  if ('launchQueue' in window) {
+    launchQueue.setConsumer((p) => {
+      if (!p.targetURL) return;
+      if (appReady) tryLaunch(p.targetURL);
+      else pendingLaunches.push(p.targetURL);
+    });
+  }
+
+  try {
+    await loadMe();
+  } catch (e) {
+    $('home-status').textContent =
+      e.name === 'AbortError'
+        ? 'Server non raggiungibile — riprova tra poco'
+        : (e.message || 'Impossibile caricare il conto');
+    show('home');
+    return;
+  }
+
+  appReady = true;
+  refreshPayButton();
+  flushLaunches();
 }
 
 // --- boot ---
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
-if ('launchQueue' in window) {
-  launchQueue.setConsumer((p) => { if (p.targetURL) tryLaunch(p.targetURL); });
-}
-
-loadMe().then(() => tryLaunch(location.href));
-
-$('btn-demo').onclick = () =>
-  handleUri('payto://iban/DE75512108001245126199?amount=EUR:42.50&message=Caff%C3%A8&receiver-name=Negozio+Demo');
-$('btn-pay').onclick = () => doPay().catch((e) => { $('errors').innerHTML = '<li>' + e.message + '</li>'; });
-$('btn-cancel').onclick = () => { show('home'); history.replaceState(null, '', '/'); };
-$('btn-done').onclick = () => { show('home'); history.replaceState(null, '', '/'); };
+document.querySelector('.app').addEventListener('click', onAppClick);
+boot();
