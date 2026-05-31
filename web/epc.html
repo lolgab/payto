@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0d3b66">
+  <title>PayTo — QR EPC</title>
+  <link rel="icon" href="/icons/seller.svg">
+  <link rel="stylesheet" href="/seller.css">
+  <style>
+    .epc-form { display: flex; flex-direction: column; gap: 1rem; flex: 1; min-height: 0; }
+    .epc-field { display: flex; flex-direction: column; gap: 0.35rem; }
+    .epc-field label {
+      font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.05em; color: var(--text-muted);
+    }
+    .epc-field input {
+      width: 100%; padding: 0.85rem 1rem; border: 1px solid var(--border);
+      border-radius: 12px; font-size: 1rem; background: var(--surface);
+      font-variant-numeric: tabular-nums;
+    }
+    .epc-field input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .epc-field-hint { font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
+    .epc-error { color: #dc2626; font-size: 0.85rem; min-height: 1.2rem; }
+    .epc-settings {
+      background: none; border: none; color: rgba(255,255,255,0.85);
+      font-size: 0.82rem; cursor: pointer; padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+    }
+    .epc-settings:active { background: rgba(255,255,255,0.15); }
+  </style>
+  <script src="/qr-creator.min.js"></script>
+</head>
+<body>
+  <div class="pos">
+    <header class="pos-header">
+      <div class="pos-brand">
+        <div class="pos-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7" rx="1"/>
+            <rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+            <path d="M14 17h7M17.5 14v7"/>
+          </svg>
+        </div>
+        <span>QR EPC</span>
+      </div>
+      <button id="btn-settings" class="epc-settings" type="button" hidden>IBAN</button>
+      <span id="iban-display" class="pos-shop" hidden>—</span>
+    </header>
+
+    <div class="pos-body">
+      <section id="screen-setup" class="pos-screen">
+        <p class="pos-label">Configura il conto</p>
+        <form id="setup-form" class="epc-form">
+          <div class="epc-field">
+            <label for="input-iban">IBAN</label>
+            <input id="input-iban" name="iban" type="text" inputmode="text"
+              autocomplete="off" autocapitalize="characters" spellcheck="false"
+              placeholder="IT60 X054 2811 1010 0000 0123 456" required>
+            <p class="epc-field-hint">L'IBAN viene salvato solo su questo dispositivo.</p>
+          </div>
+          <div class="epc-field">
+            <label for="input-name">Intestatario</label>
+            <input id="input-name" name="name" type="text" maxlength="70"
+              autocomplete="organization" placeholder="Nome beneficiario">
+            <p class="epc-field-hint">Obbligatorio nel QR EPC (max 70 caratteri).</p>
+          </div>
+          <p id="setup-error" class="epc-error" aria-live="polite"></p>
+          <button type="submit" class="pos-enter">Salva e continua</button>
+        </form>
+      </section>
+
+      <section id="screen-input" class="pos-screen" hidden>
+        <p class="pos-label">Importo da incassare</p>
+        <div class="pos-display">
+          <span id="amount-display" class="pos-amount">€ 0,00</span>
+        </div>
+        <div class="pos-keypad">
+          <button class="key" data-key="7">7</button>
+          <button class="key" data-key="8">8</button>
+          <button class="key" data-key="9">9</button>
+          <button class="key" data-key="4">4</button>
+          <button class="key" data-key="5">5</button>
+          <button class="key" data-key="6">6</button>
+          <button class="key" data-key="1">1</button>
+          <button class="key" data-key="2">2</button>
+          <button class="key" data-key="3">3</button>
+          <button class="key key-fn" data-key="clear">C</button>
+          <button class="key" data-key="0">0</button>
+          <button class="key key-fn" data-key="back">⌫</button>
+        </div>
+        <button id="btn-enter" class="pos-enter" disabled>Genera QR</button>
+      </section>
+
+      <section id="screen-qr" class="pos-screen" hidden>
+        <div class="nfc-panel">
+          <p id="qr-amount" class="nfc-amount">€ 0,00</p>
+          <div class="nfc-qr-wrap">
+            <canvas id="payment-qr" class="nfc-qr" aria-label="Codice QR EPC"></canvas>
+          </div>
+          <p class="nfc-qr-hint">Scansiona con l'app della tua banca</p>
+          <p id="qr-iban" class="nfc-status"></p>
+          <button id="btn-cancel" class="pos-cancel">Nuovo importo</button>
+        </div>
+      </section>
+    </div>
+  </div>
+  <script src="/epc.js"></script>
+</body>
+</html>
