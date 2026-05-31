@@ -10,8 +10,11 @@ import cats.syntax.all.*
 import com.comcast.ip4s.*
 import org.http4s.*
 import org.http4s.dsl.io.*
+import org.http4s.headers.Location
+import org.http4s.implicits.uri
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.staticcontent.*
+import fs2.io.file.Path as FsPath
 import porcupine.*
 import porcupine.Codec.*
 import porcupine.sql
@@ -115,8 +118,15 @@ object Main extends IOApp.Simple:
         pay(db, req)
     }
 
+    val pages = HttpRoutes.of[IO] {
+      case GET -> Root / "seller" =>
+        serveWebPage("seller.html")
+      case GET -> Root / "seller.html" =>
+        MovedPermanently(Location(uri"/seller"))
+    }
+
     val static = fileService[IO](FileService.Config("web", ""))
-    val app = (api <+> static).orNotFound
+    val app = (api <+> pages <+> static).orNotFound
 
     EmberServerBuilder
       .default[IO]
@@ -206,6 +216,9 @@ object Main extends IOApp.Simple:
   private def toAccount(t: (Long, String, String, Double, String)): Account =
     val (id, name, iban, balance, currency) = t
     Account(id, name, iban, balance, currency)
+
+  private def serveWebPage(name: String): IO[Response[IO]] =
+    StaticFile.fromPath(FsPath(s"web/$name")).getOrElseF(NotFound())
 
   private def cookie(id: Long) =
     ResponseCookie("account_id", id.toString, path = Some("/"), maxAge = Some(365 * 24 * 3600))

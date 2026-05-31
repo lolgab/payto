@@ -1,0 +1,12 @@
+{
+  "id": "/seller",
+  "name": "PayTo Cassa",
+  "short_name": "Cassa",
+  "lang": "it",
+  "start_url": "/seller",
+  "scope": "/seller",
+  "display": "standalone",
+  "background_color": "#0d3b66",
+  "theme_color": "#0d3b66",
+  "icons": [{ "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

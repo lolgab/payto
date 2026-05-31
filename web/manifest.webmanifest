@@ -1,8 +1,10 @@
 {
+  "id": "/",
   "name": "PayTo Banca",
   "short_name": "PayTo",
   "lang": "it",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#eef2f7",
   "theme_color": "#0d3b66",

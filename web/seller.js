@@ -183,6 +183,8 @@ $('btn-enter').onclick = () => startNfc();
 $('btn-cancel').onclick = () => cancelNfc();
 $('screen-done').onclick = () => newSale();
 
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/seller/sw.js');
+
 loadSeller()
   .then(() => refreshDisplay())
   .catch((e) => { $('shop-name').textContent = e.message; });
