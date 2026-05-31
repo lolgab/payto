@@ -83,6 +83,47 @@ jobs:
           echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
           echo "Certificate SHA-256: $SHA256"
 
+      - name: Sync assetlinks.json
+        run: |
+          SHA256="${{ steps.cert.outputs.sha256 }}"
+          FILE="web/.well-known/assetlinks.json"
+          python3 - <<PY
+          import json, pathlib, sys
+          sha = "$SHA256"
+          path = pathlib.Path("$FILE")
+          data = json.loads(path.read_text())
+          changed = False
+          for entry in data:
+              fps = entry["target"]["sha256_cert_fingerprints"]
+              if fps != [sha]:
+                  entry["target"]["sha256_cert_fingerprints"] = [sha]
+                  changed = True
+          if changed:
+              path.write_text(json.dumps(data, indent=2) + "\n")
+              print(f"Updated {path}")
+          else:
+              print("assetlinks.json already up to date")
+          PY
+          if git diff --quiet "$FILE"; then
+            echo "synced=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "synced=true" >> "$GITHUB_OUTPUT"
+          fi
+        id: assetlinks
+
+      - name: Commit assetlinks.json
+        if: steps.assetlinks.outputs.synced == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add web/.well-known/assetlinks.json
+          git commit -m "$(cat <<'EOF'
+Update assetlinks.json with release signing certificate.
+
+EOF
+)"
+          git push
+
       - name: Package APKs
         run: |
           cp android/app/build/outputs/apk/release/app-release.apk payto-wallet.apk
