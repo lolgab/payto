@@ -4,6 +4,11 @@ const STORAGE_KEY = 'payto-bonifico-config';
 const LEGACY_STORAGE_KEY = 'payto-epc-config';
 const CAUSALE_MAX = 140;
 
+// EPC069-12 v3.1 (2024-03-19): version 002, UTF-8; INST = SEPA Instant (SCT Inst)
+const EPC_VERSION = '002';
+const EPC_CHARSET = '1';
+const EPC_IDENT = 'INST';
+
 let config = null;
 let cents = 0;
 
@@ -126,9 +131,9 @@ function clearAmount() {
 function buildEpcPayload(amount, causale) {
   const lines = [
     'BCD',
-    '002',
-    '1',
-    'SCT',
+    EPC_VERSION,
+    EPC_CHARSET,
+    EPC_IDENT,
     '',
     config.name,
     config.iban,
@@ -136,8 +141,10 @@ function buildEpcPayload(amount, causale) {
     '',
     '',
     causale,
-    '',
   ];
+  while (lines.length > 0 && lines[lines.length - 1] === '') {
+    lines.pop();
+  }
   return lines.join('\n');
 }
 
