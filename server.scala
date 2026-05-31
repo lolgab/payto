@@ -41,6 +41,17 @@ object Main extends IOApp.Simple:
   private val insertTransfer =
     sql"insert into transfers (from_iban, to_iban, amount, message) values ($text, $text, $real, $text)".command
 
+  private val sellerIban = "DE75512108001245126199"
+
+  private val maxTransferIdToSeller =
+    sql"select coalesce(max(id), 0) from transfers where to_iban = $text".query(integer)
+
+  private val findPaymentAfter =
+    sql"""select id, from_iban, amount from transfers
+          where to_iban = $text and id > $integer and amount = $real
+          order by id asc limit 1"""
+      .query(integer *: text *: real *: nil)
+
   def run: IO[Unit] =
     Database.open[IO]("data/payto.db").use { db =>
       initDb(db) >> startServer(db)
@@ -66,7 +77,7 @@ object Main extends IOApp.Simple:
           created_at text not null default (datetime('now'))
         )
       """.command) >>
-      db.option(selectByIban, "DE75512108001245126199").flatMap {
+      db.option(selectByIban, sellerIban).flatMap {
         case Some(_) => IO.unit
         case None =>
           db.execute(insertAccount, ("Demo Shop", "DE75512108001245126199", 0.0, "EUR"))
@@ -75,10 +86,19 @@ object Main extends IOApp.Simple:
   private def startServer(db: Db): IO[Unit] =
     val api = HttpRoutes.of[IO] {
       case GET -> Root / "api" / "seller" =>
-        loadByIban(db, "DE75512108001245126199").flatMap {
+        loadByIban(db, sellerIban).flatMap {
           case Some(acc) => jsonOk(accJson(acc))
           case None      => NotFound(jsonErr("Seller account not found"))
         }
+
+      case GET -> Root / "api" / "seller" / "baseline" =>
+        db.execute(maxTransferIdToSeller, sellerIban).flatMap {
+          case id :: Nil => Ok(s"""{"lastId":$id}""")
+          case _         => InternalServerError(jsonErr("Failed to read baseline"))
+        }
+
+      case req @ GET -> Root / "api" / "seller" / "payment" =>
+        sellerPayment(db, req)
 
       case req @ GET -> Root / "api" / "me" =>
         me(db, req)
@@ -131,6 +151,17 @@ object Main extends IOApp.Simple:
       case Some((_, name, ib, _, _)) => Ok(jsonStr("name", name, "iban", ib))
       case None                      => NotFound(jsonErr(s"Unknown IBAN: $normalized"))
     }
+
+  private def sellerPayment(db: Db, req: Request[IO]): IO[Response[IO]] =
+    val after = req.params.get("after").flatMap(_.toLongOption).getOrElse(0L)
+    req.params.get("amount").flatMap(_.toDoubleOption) match
+      case None => BadRequest(jsonErr("Missing amount parameter"))
+      case Some(amt) =>
+        db.option(findPaymentAfter, (sellerIban, after, amt)).flatMap {
+          case Some((id, from, paid)) =>
+            Ok(s"""{"paid":true,"id":$id,"fromIban":"$from","amount":$paid}""")
+          case None => Ok("""{"paid":false}""")
+        }
 
   private def pay(db: Db, req: Request[IO]): IO[Response[IO]] =
     val fromId = req.cookies.find(_.name == "account_id").flatMap(_.content.toLongOption)
