@@ -1,23 +1,32 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#111827">
-  <title>PayTo POS</title>
+  <meta name="theme-color" content="#0d3b66">
+  <title>PayTo — Cassa</title>
   <link rel="icon" href="/icons/icon.svg">
   <link rel="stylesheet" href="/seller.css">
 </head>
 <body>
   <div class="pos">
     <header class="pos-header">
-      <span class="pos-brand">PayTo POS</span>
+      <div class="pos-brand">
+        <div class="pos-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="4" width="20" height="16" rx="2"/>
+            <path d="M6 8h.01M10 8h.01"/>
+          </svg>
+        </div>
+        <span>PayTo Cassa</span>
+      </div>
       <span id="shop-name" class="pos-shop">—</span>
     </header>
 
     <section id="screen-input" class="pos-screen">
+      <p class="pos-label">Importo da incassare</p>
       <div class="pos-display">
-        <span id="amount-display" class="pos-amount">€ 0.00</span>
+        <span id="amount-display" class="pos-amount">€ 0,00</span>
       </div>
       <div class="pos-keypad">
         <button class="key" data-key="7">7</button>
@@ -33,7 +42,7 @@
         <button class="key" data-key="0">0</button>
         <button class="key key-fn" data-key="back">⌫</button>
       </div>
-      <button id="btn-enter" class="pos-enter" disabled>Enter</button>
+      <button id="btn-enter" class="pos-enter" disabled>Conferma</button>
     </section>
 
     <section id="screen-nfc" class="pos-screen" hidden>
@@ -46,18 +55,18 @@
             <circle cx="32" cy="32" r="4" fill="currentColor"/>
           </svg>
         </div>
-        <p id="nfc-amount" class="nfc-amount">€ 0.00</p>
-        <p id="nfc-status" class="nfc-status">Tap customer's phone — PayTo will appear in the app chooser</p>
-        <button id="btn-cancel" class="pos-cancel">Cancel</button>
+        <p id="nfc-amount" class="nfc-amount">€ 0,00</p>
+        <p id="nfc-status" class="nfc-status">Avvicina il telefono del cliente — PayTo apparirà tra le app disponibili</p>
+        <button id="btn-cancel" class="pos-cancel">Annulla</button>
       </div>
     </section>
 
     <section id="screen-done" class="pos-screen done-screen" hidden>
       <div class="done-panel">
         <p class="done-check">✓</p>
-        <p class="done-title">Payment received</p>
-        <p id="done-amount" class="done-amount">€ 0.00</p>
-        <p class="done-hint">Tap anywhere to start a new sale</p>
+        <p class="done-title">Pagamento ricevuto</p>
+        <p id="done-amount" class="done-amount">€ 0,00</p>
+        <p class="done-hint">Tocca lo schermo per una nuova vendita</p>
       </div>
     </section>
   </div>

@@ -1,9 +1,9 @@
 //> using scala 3.6.3
-//> using dep org.typelevel::cats-effect::3.5.7
-//> using dep org.http4s::http4s-ember-server::0.23.30
-//> using dep org.http4s::http4s-dsl::0.23.30
+//> using dep org.typelevel::cats-effect::3.7.0
+//> using dep org.http4s::http4s-ember-server::0.23.34
+//> using dep org.http4s::http4s-dsl::0.23.34
 //> using dep com.armanbilge::porcupine::0.0.1
-//> using dep org.xerial:sqlite-jdbc:3.49.1.0
+//> using dep org.xerial:sqlite-jdbc:3.53.1.0
 
 import cats.effect.*
 import cats.syntax.all.*
@@ -78,9 +78,10 @@ object Main extends IOApp.Simple:
         )
       """.command) >>
       db.option(selectByIban, sellerIban).flatMap {
-        case Some(_) => IO.unit
+        case Some(_) =>
+          db.execute(sql"update accounts set name = $text where iban = $text".command, ("Negozio Demo", sellerIban))
         case None =>
-          db.execute(insertAccount, ("Demo Shop", "DE75512108001245126199", 0.0, "EUR"))
+          db.execute(insertAccount, ("Negozio Demo", "DE75512108001245126199", 0.0, "EUR"))
       }
 
   private def startServer(db: Db): IO[Unit] =
@@ -88,13 +89,13 @@ object Main extends IOApp.Simple:
       case GET -> Root / "api" / "seller" =>
         loadByIban(db, sellerIban).flatMap {
           case Some(acc) => jsonOk(accJson(acc))
-          case None      => NotFound(jsonErr("Seller account not found"))
+          case None      => NotFound(jsonErr("Conto venditore non trovato"))
         }
 
       case GET -> Root / "api" / "seller" / "baseline" =>
         db.execute(maxTransferIdToSeller, sellerIban).flatMap {
           case id :: Nil => Ok(s"""{"lastId":$id}""")
-          case _         => InternalServerError(jsonErr("Failed to read baseline"))
+          case _         => InternalServerError(jsonErr("Impossibile leggere lo stato dei pagamenti"))
         }
 
       case req @ GET -> Root / "api" / "seller" / "payment" =>
@@ -106,7 +107,7 @@ object Main extends IOApp.Simple:
       case req @ GET -> Root / "api" / "account" =>
         req.params.get("iban") match
           case Some(iban) => lookup(db, iban)
-          case None       => BadRequest(jsonErr("Missing iban parameter"))
+          case None       => BadRequest(jsonErr("Parametro IBAN mancante"))
 
       case req @ POST -> Root / "api" / "pay" =>
         pay(db, req)
@@ -133,29 +134,29 @@ object Main extends IOApp.Simple:
       case None => createAccount(db)
 
   private def createAccount(db: Db): IO[Response[IO]] =
-    val name = s"User ${Random.between(1000, 9999)}"
+    val name = s"Utente ${Random.between(1000, 9999)}"
     val iban = Iban.generate()
     db.execute(insertAccount, (name, iban, 4250.0, "EUR")) >>
       db.execute(sql"select last_insert_rowid()".query(integer)).flatMap {
         case id :: Nil =>
           loadAccount(db, id).flatMap {
             case Some(acc) => jsonOk(accJson(acc)).map(_.addCookie(cookie(id)))
-            case None      => InternalServerError("Failed to create account")
+            case None      => InternalServerError("Impossibile creare il conto")
           }
-        case _ => InternalServerError("Failed to create account")
+        case _ => InternalServerError("Impossibile creare il conto")
       }
 
   private def lookup(db: Db, iban: String): IO[Response[IO]] =
     val normalized = iban.replace(" ", "").toUpperCase
     db.option(selectByIban, normalized).flatMap {
       case Some((_, name, ib, _, _)) => Ok(jsonStr("name", name, "iban", ib))
-      case None                      => NotFound(jsonErr(s"Unknown IBAN: $normalized"))
+      case None                      => NotFound(jsonErr(s"IBAN sconosciuto: $normalized"))
     }
 
   private def sellerPayment(db: Db, req: Request[IO]): IO[Response[IO]] =
     val after = req.params.get("after").flatMap(_.toLongOption).getOrElse(0L)
     req.params.get("amount").flatMap(_.toDoubleOption) match
-      case None => BadRequest(jsonErr("Missing amount parameter"))
+      case None => BadRequest(jsonErr("Parametro importo mancante"))
       case Some(amt) =>
         db.option(findPaymentAfter, (sellerIban, after, amt)).flatMap {
           case Some((id, from, paid)) =>
@@ -165,7 +166,7 @@ object Main extends IOApp.Simple:
 
   private def pay(db: Db, req: Request[IO]): IO[Response[IO]] =
     val fromId = req.cookies.find(_.name == "account_id").flatMap(_.content.toLongOption)
-    if fromId.isEmpty then BadRequest(jsonErr("No account — reload the page"))
+    if fromId.isEmpty then BadRequest(jsonErr("Nessun conto — ricarica la pagina"))
     else
       req.as[String].flatMap { body =>
         val toIban = jsonStr(body, "toIban").map(_.replace(" ", "").toUpperCase)
@@ -177,15 +178,15 @@ object Main extends IOApp.Simple:
               toAcc <- loadByIban(db, to)
             } yield (from, toAcc)).flatMap {
               case (Some(f), Some(t)) => transfer(db, f, t, amt, jsonStr(body, "message").getOrElse(""))
-              case _                    => BadRequest(jsonErr("Unknown recipient IBAN"))
+              case _                    => BadRequest(jsonErr("IBAN destinatario sconosciuto"))
             }
-          case _ => BadRequest(jsonErr("Missing toIban or amount"))
+          case _ => BadRequest(jsonErr("IBAN destinatario o importo mancante"))
       }
 
   private def transfer(db: Db, from: Account, to: Account, amount: Double, message: String): IO[Response[IO]] =
-    if amount <= 0 then BadRequest(jsonErr("Amount must be positive"))
-    else if from.iban == to.iban then BadRequest(jsonErr("Cannot pay yourself"))
-    else if from.balance < amount then BadRequest(jsonErr("Insufficient funds"))
+    if amount <= 0 then BadRequest(jsonErr("L'importo deve essere positivo"))
+    else if from.iban == to.iban then BadRequest(jsonErr("Non puoi pagare te stesso"))
+    else if from.balance < amount then BadRequest(jsonErr("Fondi insufficienti"))
     else
       val newFrom = from.balance - amount
       val newTo = to.balance + amount
@@ -228,7 +229,7 @@ object Main extends IOApp.Simple:
 object Iban:
   private val rng = Random
 
-  def generate(country: String = "DE"): String =
+  def generate(country: String = "IT"): String =
     val cc = country.toUpperCase
     val bban = (1 to 18).map(_ => rng.nextInt(10)).mkString
     s"$cc${checkDigits(cc, bban)}$bban"

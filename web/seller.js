@@ -8,7 +8,9 @@ let expectedAmount = 0;
 let baselineId = 0;
 
 function fmtCents(c) {
-  return '€ ' + (c / 100).toLocaleString(undefined, {
+  return (c / 100).toLocaleString('it-IT', {
+    style: 'currency',
+    currency: 'EUR',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -58,7 +60,7 @@ function stopPolling() {
 
 async function getBaseline() {
   const res = await fetch('/api/seller/baseline');
-  if (!res.ok) throw new Error('Could not read payment baseline');
+  if (!res.ok) throw new Error('Impossibile leggere lo stato dei pagamenti');
   const data = await res.json();
   return data.lastId;
 }
@@ -90,7 +92,7 @@ async function startNfc() {
   expectedAmount = cents / 100;
   pendingUri = buildPaytoUri(expectedAmount);
   $('nfc-amount').textContent = fmtCents(cents);
-  $('nfc-status').textContent = 'Tap customer phone — PayTo will appear in the app chooser';
+  $('nfc-status').textContent = 'Avvicina il telefono del cliente — PayTo apparirà tra le app disponibili';
   show('screen-nfc');
 
   try {
@@ -102,7 +104,7 @@ async function startNfc() {
 
   if (!('NDEFWriter' in window)) {
     $('nfc-status').textContent =
-      'Web NFC not available (needs Chrome on Android + HTTPS/localhost)';
+      'Web NFC non disponibile (serve Chrome su Android + HTTPS/localhost)';
     startPolling();
     return;
   }
@@ -112,15 +114,15 @@ async function startNfc() {
     await writer.write({
       records: [{ recordType: 'url', data: pendingUri }],
     });
-    $('nfc-status').textContent = 'Waiting for payment…';
+    $('nfc-status').textContent = 'In attesa del pagamento…';
     startPolling();
   } catch (e) {
     if (e.name === 'NotAllowedError') {
-      $('nfc-status').textContent = 'NFC permission denied';
+      $('nfc-status').textContent = 'Permesso NFC negato';
     } else if (e.name === 'NotSupportedError') {
-      $('nfc-status').textContent = 'NFC not supported on this device';
+      $('nfc-status').textContent = 'NFC non supportato su questo dispositivo';
     } else {
-      $('nfc-status').textContent = e.message || 'NFC write failed';
+      $('nfc-status').textContent = e.message || 'Scrittura NFC non riuscita';
     }
     startPolling();
   }
@@ -141,7 +143,7 @@ function newSale() {
 
 async function loadSeller() {
   const res = await fetch('/api/seller');
-  if (!res.ok) throw new Error('Could not load seller account');
+  if (!res.ok) throw new Error('Impossibile caricare il conto venditore');
   seller = await res.json();
   $('shop-name').textContent = seller.name;
 }

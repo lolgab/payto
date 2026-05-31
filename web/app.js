@@ -4,7 +4,7 @@ function parsePayto(uri) {
   let s = uri.trim();
   if (s.startsWith('web+payto://')) s = 'payto://' + s.slice(12);
   if (s.startsWith('payto:') && !s.startsWith('payto://')) s = 'payto://' + s.slice(6).replace(/^\/+/, '');
-  if (!s.startsWith('payto://')) throw new Error('Not a payto URI');
+  if (!s.startsWith('payto://')) throw new Error('URI payto non valida');
 
   const rest = s.slice(8);
   const q = rest.indexOf('?');
@@ -43,7 +43,7 @@ function parsePayto(uri) {
 
   if (opts.amount) {
     const m = opts.amount.match(/^([A-Za-z]+):([\d,]+)(?:\.([\d,]+))?$/);
-    if (!m) throw new Error('Invalid amount');
+    if (!m) throw new Error('Importo non valido');
     const frac = (m[3] || '').replace(/,/g, '');
     payment.amount = {
       currency: m[1].toUpperCase(),
@@ -70,8 +70,13 @@ function fmtIban(iban) {
 }
 
 function fmtMoney(amount, currency) {
-  return '€ ' + Number(amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    + (currency && currency !== 'EUR' ? ' ' + currency : '');
+  const cur = currency || 'EUR';
+  return Number(amount).toLocaleString('it-IT', {
+    style: 'currency',
+    currency: cur,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 async function loadMe() {
@@ -97,10 +102,10 @@ function showPayment(p) {
   $('f-message').textContent = p.message || '—';
 
   const errors = [];
-  if (p.authority !== 'iban') errors.push('Only IBAN payments supported in this POC');
-  if (!p.iban) errors.push('Missing IBAN');
-  if (!p.amount || p.amount.value <= 0) errors.push('Missing or invalid amount');
-  if (me && p.iban === me.iban) errors.push('Cannot pay yourself');
+  if (p.authority !== 'iban') errors.push('In questa demo sono supportati solo pagamenti IBAN');
+  if (!p.iban) errors.push('IBAN mancante');
+  if (!p.amount || p.amount.value <= 0) errors.push('Importo mancante o non valido');
+  if (me && p.iban === me.iban) errors.push('Non puoi pagare te stesso');
 
   if (p.iban && !p.receiverName) {
     lookupRecipient(p.iban).then((acc) => {
@@ -155,14 +160,15 @@ async function doPay() {
   });
   const data = await res.json();
   if (!res.ok || !data.ok) {
-    $('errors').innerHTML = '<li>' + (data.error || 'Payment failed') + '</li>';
+    $('errors').innerHTML = '<li>' + (data.error || 'Pagamento non riuscito') + '</li>';
     return;
   }
   me.balance = data.balance;
   $('balance').textContent = fmtMoney(me.balance, me.currency);
+  const msg = p.message ? ' — "' + p.message + '"' : '';
   $('success-text').textContent =
-    'Sent ' + p.amount.formatted + ' ' + p.amount.currency +
-    ' to ' + fmtIban(p.iban) + (p.message ? ' — "' + p.message + '"' : '') + '.';
+    'Hai inviato ' + p.amount.formatted + ' ' + p.amount.currency +
+    ' a ' + fmtIban(p.iban) + msg + '.';
   show('success');
 }
 
@@ -176,7 +182,7 @@ if ('launchQueue' in window) {
 loadMe().then(() => tryLaunch(location.href));
 
 $('btn-demo').onclick = () =>
-  handleUri('payto://iban/DE75512108001245126199?amount=EUR:42.50&message=Coffee&receiver-name=Demo+Shop');
+  handleUri('payto://iban/DE75512108001245126199?amount=EUR:42.50&message=Caff%C3%A8&receiver-name=Negozio+Demo');
 $('btn-pay').onclick = () => doPay().catch((e) => { $('errors').innerHTML = '<li>' + e.message + '</li>'; });
 $('btn-cancel').onclick = () => { show('home'); history.replaceState(null, '', '/'); };
 $('btn-done').onclick = () => { show('home'); history.replaceState(null, '', '/'); };
