@@ -117,11 +117,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add web/.well-known/assetlinks.json
-          git commit -m "$(cat <<'EOF'
-Update assetlinks.json with release signing certificate.
-
-EOF
-)"
+          git commit -m "Update assetlinks.json with release signing certificate"
           git push
 
       - name: Package APKs
