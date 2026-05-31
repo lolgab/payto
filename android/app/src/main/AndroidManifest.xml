@@ -83,8 +83,8 @@
                 <data android:scheme="payto" />
             </intent-filter>
 
-            <!-- Tag NFC con URI payto:// -->
-            <intent-filter>
+            <!-- Tag NFC / HCE con URI payto:// -->
+            <intent-filter android:priority="1">
                 <action android:name="android.nfc.action.NDEF_DISCOVERED" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:scheme="payto" />

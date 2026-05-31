@@ -108,13 +108,29 @@ function showPaymentReceived(data) {
   show('screen-done');
 }
 
+function invokeSellerApp(path) {
+  const iframe = document.createElement('iframe');
+  iframe.hidden = true;
+  iframe.src = `payto-seller://${path}`;
+  document.body.appendChild(iframe);
+  setTimeout(() => iframe.remove(), 500);
+}
+
+function startNativeNfc(uri) {
+  invokeSellerApp('nfc?uri=' + encodeURIComponent(uri));
+}
+
+function stopNativeNfc() {
+  invokeSellerApp('nfc-stop');
+}
+
 async function startNfc() {
   expectedAmount = cents / 100;
   pendingUri = buildPaytoUri(expectedAmount);
   $('nfc-amount').textContent = fmtCents(cents);
   renderPaymentQr(pendingUri);
   $('nfc-status').textContent =
-    'Scansiona il QR o avvicina il telefono — PayTo apparirà tra le app disponibili';
+    'Avvicina il telefono del cliente — PayTo apparirà tra le app disponibili';
   show('screen-nfc');
 
   try {
@@ -124,42 +140,22 @@ async function startNfc() {
     return;
   }
 
-  if (!('NDEFReader' in window)) {
-    $('nfc-status').textContent =
-      'Mostra il codice QR al cliente per pagare';
-    startPolling();
-    return;
-  }
-
-  try {
-    const ndef = new NDEFReader();
-    await ndef.write({
-      records: [{ recordType: 'url', data: pendingUri }],
-    });
-    $('nfc-status').textContent = 'In attesa del pagamento…';
-    startPolling();
-  } catch (e) {
-    if (e.name === 'NotAllowedError') {
-      $('nfc-status').textContent =
-        'Avvicinamento non attivo — il cliente può pagare scansionando il QR';
-    } else if (e.name === 'NotSupportedError') {
-      $('nfc-status').textContent =
-        'Mostra il codice QR al cliente per pagare';
-    } else {
-      $('nfc-status').textContent =
-        e.message || 'Mostra il codice QR al cliente per pagare';
-    }
-    startPolling();
-  }
+  // Emulazione NFC nativa (HCE): unico modo affidabile phone-to-phone su Android.
+  // Web NFC write() serve solo per tag fisici, non per avvicinare due telefoni.
+  startNativeNfc(pendingUri);
+  $('nfc-status').textContent = 'In attesa del pagamento…';
+  startPolling();
 }
 
 function cancelNfc() {
+  stopNativeNfc();
   stopPolling();
   clearAmount();
   show('screen-input');
 }
 
 function newSale() {
+  stopNativeNfc();
   stopPolling();
   clearAmount();
   pendingUri = null;

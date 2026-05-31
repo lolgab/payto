@@ -75,6 +75,20 @@
                     android:pathPrefix="/seller"
                     android:scheme="https" />
             </intent-filter>
+
+            <!-- Bridge PWA → emulazione NFC nativa (HCE phone-to-phone) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="payto-seller" android:host="nfc" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="payto-seller" android:host="nfc-stop" />
+            </intent-filter>
         </activity>
 
         <activity
