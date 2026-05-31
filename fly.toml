@@ -13,3 +13,9 @@ primary_region = 'fra'
 [[mounts]]
   source = 'payto_data'
   destination = '/app/data'
+
+[[vm]]
+  size = 'shared-cpu-1x'
+  memory = 512
+  cpu_kind = 'shared'
+  cpus = 1
