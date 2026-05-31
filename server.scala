@@ -74,6 +74,12 @@ object Main extends IOApp.Simple:
 
   private def startServer(db: Db): IO[Unit] =
     val api = HttpRoutes.of[IO] {
+      case GET -> Root / "api" / "seller" =>
+        loadByIban(db, "DE75512108001245126199").flatMap {
+          case Some(acc) => jsonOk(accJson(acc))
+          case None      => NotFound(jsonErr("Seller account not found"))
+        }
+
       case req @ GET -> Root / "api" / "me" =>
         me(db, req)
 

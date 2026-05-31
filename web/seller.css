@@ -1,0 +1,132 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, sans-serif;
+  background: #111827;
+  color: #f9fafb;
+  min-height: 100vh;
+  touch-action: manipulation;
+}
+
+.pos {
+  max-width: 380px;
+  margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.pos-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  background: #1f2937;
+  border-bottom: 1px solid #374151;
+}
+
+.pos-brand { font-weight: 700; font-size: 0.95rem; letter-spacing: 0.02em; }
+.pos-shop { font-size: 0.85rem; color: #9ca3af; }
+
+.pos-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem;
+}
+
+.pos-display {
+  background: #0b1220;
+  border: 2px solid #374151;
+  border-radius: 8px;
+  padding: 1.5rem 1rem;
+  text-align: right;
+  margin-bottom: 1.25rem;
+}
+
+.pos-amount {
+  font-size: 2.75rem;
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.pos-keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  flex: 1;
+}
+
+.key {
+  aspect-ratio: 1.6;
+  border: none;
+  border-radius: 8px;
+  background: #1f2937;
+  color: #f9fafb;
+  font-size: 1.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.key:active { background: #374151; }
+.key-fn { color: #9ca3af; font-size: 1.2rem; }
+
+.pos-enter {
+  margin-top: 1rem;
+  width: 100%;
+  padding: 1.1rem;
+  border: none;
+  border-radius: 8px;
+  background: #16a34a;
+  color: white;
+  font-size: 1.15rem;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pos-enter:disabled { opacity: 0.35; cursor: not-allowed; }
+.pos-enter:active:not(:disabled) { background: #15803d; }
+
+.pos-cancel {
+  margin-top: 1.5rem;
+  width: 100%;
+  padding: 0.85rem;
+  border: none;
+  border-radius: 8px;
+  background: #374151;
+  color: #e5e7eb;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.nfc-panel, .done-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.75rem;
+}
+
+.nfc-icon {
+  color: #60a5fa;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.95); }
+}
+
+.nfc-amount { font-size: 2.5rem; font-weight: 300; font-variant-numeric: tabular-nums; }
+.nfc-status { color: #9ca3af; font-size: 0.95rem; max-width: 16rem; line-height: 1.5; }
+
+.done-check { font-size: 3rem; color: #4ade80; line-height: 1; }
+.done-title { font-size: 1.2rem; font-weight: 600; }
+.done-text { color: #9ca3af; font-size: 0.9rem; margin-bottom: 0.5rem; }

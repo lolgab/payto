@@ -1,5 +1,5 @@
 app = 'payto'
-primary_region = 'ams'
+primary_region = 'fra'
 
 [build]
 

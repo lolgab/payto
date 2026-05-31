@@ -118,27 +118,28 @@ function showPayment(p) {
 function handleUri(raw) {
   try {
     showPayment(parsePayto(raw));
+    if (location.search) history.replaceState(null, '', '/');
   } catch (e) {
-    $('nfc-status').textContent = e.message;
+    $('home-status').textContent = e.message;
     show('home');
   }
 }
 
-async function readNfc() {
-  if (!('NDEFReader' in window)) {
-    $('nfc-status').textContent = 'Web NFC not available (needs Chrome on Android + HTTPS/localhost)';
-    return;
-  }
-  $('nfc-status').textContent = 'Hold an NFC tag near your device…';
-  const reader = new NDEFReader();
-  await reader.scan();
-  reader.onreading = (e) => {
-    for (const r of e.message.records) {
-      const text = new TextDecoder(r.encoding || 'utf-8').decode(r.data);
-      if (text.includes('payto')) { handleUri(text.trim()); return; }
-    }
-    $('nfc-status').textContent = 'No payto URI on tag';
-  };
+function extractPaytoUri(raw) {
+  if (!raw) return null;
+  if (raw.startsWith('payto:') || raw.startsWith('web+payto:')) return raw;
+  try {
+    const u = new URL(raw, location.origin);
+    const q = u.searchParams.get('uri');
+    if (q) return q;
+    if (u.protocol === 'payto:' || u.protocol === 'web+payto:') return u.href;
+  } catch (_) {}
+  return null;
+}
+
+function tryLaunch(raw) {
+  const uri = extractPaytoUri(raw);
+  if (uri) handleUri(uri);
 }
 
 async function doPay() {
@@ -168,17 +169,14 @@ async function doPay() {
 // --- boot ---
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
-if ('launchQueue' in window) launchQueue.setConsumer((p) => { if (p.targetURL) handleUri(p.targetURL); });
+if ('launchQueue' in window) {
+  launchQueue.setConsumer((p) => { if (p.targetURL) tryLaunch(p.targetURL); });
+}
 
-loadMe().then(() => {
-  const uri = new URLSearchParams(location.search).get('uri');
-  if (uri) handleUri(uri);
-});
+loadMe().then(() => tryLaunch(location.href));
 
 $('btn-demo').onclick = () =>
   handleUri('payto://iban/DE75512108001245126199?amount=EUR:42.50&message=Coffee&receiver-name=Demo+Shop');
-
-$('btn-nfc-read').onclick = () => readNfc().catch((e) => { $('nfc-status').textContent = e.message; });
 $('btn-pay').onclick = () => doPay().catch((e) => { $('errors').innerHTML = '<li>' + e.message + '</li>'; });
 $('btn-cancel').onclick = () => { show('home'); history.replaceState(null, '', '/'); };
 $('btn-done').onclick = () => { show('home'); history.replaceState(null, '', '/'); };

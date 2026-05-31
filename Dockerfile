@@ -1,13 +1,12 @@
-FROM eclipse-temurin:21-jdk-jammy AS build
-RUN apt-get update && apt-get install -y curl gzip && rm -rf /var/lib/apt/lists/* \
- && curl -sSLf https://github.com/VirtusLab/scala-cli/releases/download/v1.14.0/scala-cli-x86_64-pc-linux.gz \
-  | gzip -d > /usr/local/bin/scala-cli \
- && chmod +x /usr/local/bin/scala-cli
+FROM eclipse-temurin:25-jdk-noble AS build
+RUN apt-get update && apt-get install -y curl unzip
 WORKDIR /app
-COPY server.scala .
-RUN scala-cli package server.scala --assembly --main-class Main --output payto.jar
+COPY scala .
+RUN ./scala compile .
+COPY . .
+RUN ./scala package server.scala --power --assembly --output payto.jar
 
-FROM eclipse-temurin:21-jre-jammy
+FROM eclipse-temurin:25-jre-alpine-3.22
 WORKDIR /app
 COPY --from=build /app/payto.jar .
 COPY web ./web
