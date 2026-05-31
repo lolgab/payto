@@ -55,6 +55,20 @@ function buildPaytoUri(amount) {
   return `payto://iban/${seller.iban}?${params}`;
 }
 
+function renderPaymentQr(uri) {
+  QrCreator.render(
+    {
+      text: uri,
+      radius: 0.2,
+      ecLevel: 'M',
+      fill: '#0d3b66',
+      background: '#ffffff',
+      size: 200,
+    },
+    $('payment-qr'),
+  );
+}
+
 function stopPolling() {
   if (pollTimer) {
     clearInterval(pollTimer);
@@ -98,7 +112,9 @@ async function startNfc() {
   expectedAmount = cents / 100;
   pendingUri = buildPaytoUri(expectedAmount);
   $('nfc-amount').textContent = fmtCents(cents);
-  $('nfc-status').textContent = 'Avvicina il telefono del cliente — PayTo apparirà tra le app disponibili';
+  renderPaymentQr(pendingUri);
+  $('nfc-status').textContent =
+    'Scansiona il QR o avvicina il telefono — PayTo apparirà tra le app disponibili';
   show('screen-nfc');
 
   try {

@@ -7,6 +7,7 @@
   <title>PayTo — Cassa</title>
   <link rel="icon" href="/icons/icon.svg">
   <link rel="stylesheet" href="/seller.css">
+  <script src="/qr-creator.min.js"></script>
 </head>
 <body>
   <div class="pos">
@@ -48,15 +49,19 @@
 
       <section id="screen-nfc" class="pos-screen" hidden>
         <div class="nfc-panel">
+          <p id="nfc-amount" class="nfc-amount">€ 0,00</p>
+          <div class="nfc-qr-wrap">
+            <canvas id="payment-qr" class="nfc-qr" aria-label="Codice QR per pagamento"></canvas>
+          </div>
+          <p class="nfc-qr-hint">Scansiona con la fotocamera o apri PayTo</p>
           <div class="nfc-icon" aria-hidden="true">
-            <svg viewBox="0 0 64 64" width="80" height="80">
+            <svg viewBox="0 0 64 64" width="48" height="48">
               <circle cx="32" cy="32" r="28" fill="none" stroke="currentColor" stroke-width="2" opacity="0.3"/>
               <circle cx="32" cy="32" r="20" fill="none" stroke="currentColor" stroke-width="2" opacity="0.5"/>
               <circle cx="32" cy="32" r="12" fill="none" stroke="currentColor" stroke-width="2" opacity="0.7"/>
               <circle cx="32" cy="32" r="4" fill="currentColor"/>
             </svg>
           </div>
-          <p id="nfc-amount" class="nfc-amount">€ 0,00</p>
           <p id="nfc-status" class="nfc-status">Avvicina il telefono del cliente — PayTo apparirà tra le app disponibili</p>
           <button id="btn-cancel" class="pos-cancel">Annulla pagamento</button>
         </div>
