@@ -15,4 +15,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "PayTo"
-include(":app")
+include(":app", ":seller-app")

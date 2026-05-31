@@ -8,5 +8,15 @@
         "REPLACE_WITH_SHA256_FROM_gradlew_printSigningCertSha256"
       ]
     }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "it.payto.seller",
+      "sha256_cert_fingerprints": [
+        "REPLACE_WITH_SHA256_FROM_gradlew_printSigningCertSha256"
+      ]
+    }
   }
 ]

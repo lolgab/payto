@@ -1,10 +1,17 @@
 # PayTo — Trusted Web Activity (TWA)
 
-App Android che apre la PWA PayTo a **schermo intero** via Chrome Trusted Web Activity, con handler nativo per `payto://`.
+Due app Android separate (stesso progetto Gradle):
+
+| Modulo | Package | APK | PWA |
+|--------|---------|-----|-----|
+| `app` | `it.payto.wallet` | PayTo | `/` — pagamenti cliente |
+| `seller-app` | `it.payto.seller` | PayTo Cassa | `/seller` — cassa esercente |
+
+Entrambe aprono la PWA a **schermo intero** via Chrome Trusted Web Activity. Il wallet ha handler nativo per `payto://`; la cassa apre solo `/seller`.
 
 Il QR resta `payto://iban/…` — nessun HTTPS nel codice QR.
 
-## Architettura
+## Architettura (wallet)
 
 ```
 payto://iban/…  →  PaytoLauncherActivity (TWA)
@@ -28,6 +35,7 @@ Usa [android-browser-helper](https://github.com/GoogleChrome/android-browser-hel
 cd android
 ./gradlew assembleDebug
 adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb install -r seller-app/build/outputs/apk/debug/seller-app-debug.apk
 ```
 
 ## Release CI (GitHub Actions)
@@ -36,7 +44,7 @@ Ogni push su `main` compila l'APK release e lo pubblica in [GitHub Releases](htt
 
 - Workflow: `.github/workflows/android-release.yml`
 - Tag: `apk-v<run_number>` (es. `apk-v42`)
-- Artifact: `payto-wallet.apk`
+- Artifact: `payto-wallet.apk`, `payto-cassa.apk`
 - `versionCode` = numero di run GitHub Actions
 
 ### Keystore di firma
@@ -72,7 +80,7 @@ Copia la riga `SHA256:` (solo hex, con i `:`).
 
 ### 2. Aggiorna assetlinks.json
 
-In `web/.well-known/assetlinks.json` sostituisci `REPLACE_WITH_SHA256_FROM_gradlew_printSigningCertSha256` con l'impronta del keystore usato per firmare l'APK (debug per test locali, release/upload key per produzione).
+In `web/.well-known/assetlinks.json` sostituisci `REPLACE_WITH_SHA256_FROM_gradlew_printSigningCertSha256` con l'impronta del keystore usato per firmare gli APK (stessa impronta per `it.payto.wallet` e `it.payto.seller`; debug per test locali, release/upload key per produzione).
 
 ### 3. Deploy del server
 
@@ -115,6 +123,7 @@ adb shell am start -a android.intent.action.VIEW \
 ./gradlew assembleRelease
 ```
 
-- Origine: `https://payto.fly.dev`
+- Wallet: `https://payto.fly.dev/`
+- Cassa: `https://payto.fly.dev/seller`
 - Fallback: Custom Tabs (se Asset Links non verificati)
-- Aggiorna `assetlinks.json` con l'impronta del keystore di **release** prima del deploy
+- Aggiorna `assetlinks.json` con l'impronta del keystore di **release** prima del deploy (entrambi i package)

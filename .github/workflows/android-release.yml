@@ -83,9 +83,10 @@ jobs:
           echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
           echo "Certificate SHA-256: $SHA256"
 
-      - name: Package APK
+      - name: Package APKs
         run: |
           cp android/app/build/outputs/apk/release/app-release.apk payto-wallet.apk
+          cp android/seller-app/build/outputs/apk/release/seller-app-release.apk payto-cassa.apk
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -102,16 +103,23 @@ jobs:
 
             ### Installazione
 
-            Scarica `payto-wallet.apk` e installalo sul telefono (sideload).
+            | APK | Destinatario |
+            |-----|----------------|
+            | `payto-wallet.apk` | Cliente — pagamenti e wallet |
+            | `payto-cassa.apk` | Esercente — cassa POS |
+
+            Installa l'APK adatto sul telefono (sideload). I due pacchetti (`it.payto.wallet` e `it.payto.seller`) possono coesistere sullo stesso dispositivo.
 
             ### TWA / Asset Links
 
-            Impronta SHA-256 del certificato di firma (da inserire in `web/.well-known/assetlinks.json`):
+            Impronta SHA-256 del certificato di firma (da inserire in `web/.well-known/assetlinks.json` per entrambe le app):
 
             ```
             ${{ steps.cert.outputs.sha256 }}
             ```
-          files: payto-wallet.apk
+          files: |
+            payto-wallet.apk
+            payto-cassa.apk
           generate_release_notes: true
           make_latest: true
         env:
