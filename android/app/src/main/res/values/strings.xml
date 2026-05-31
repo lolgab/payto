@@ -5,7 +5,7 @@
     <!-- Sovrascritti da resValue in build.gradle.kts -->
     <string name="launchUrl">https://payto.fly.dev/</string>
     <string name="hostName">payto.fly.dev</string>
-    <string name="fallbackStrategy">customtabs</string>
+    <string name="fallbackStrategy">webview</string>
     <string name="assetStatements">
         [{
             \"relation\": [\"delegate_permission/common.handle_all_urls\"],

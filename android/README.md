@@ -125,5 +125,5 @@ adb shell am start -a android.intent.action.VIEW \
 
 - Wallet: `https://payto.fly.dev/`
 - Cassa: `https://payto.fly.dev/seller`
-- Fallback: Custom Tabs (se Asset Links non verificati)
+- Fallback: WebView a schermo intero (se la verifica TWA fallisce, es. su Realme/Xiaomi)
 - Aggiorna `assetlinks.json` con l'impronta del keystore di **release** prima del deploy (entrambi i package)

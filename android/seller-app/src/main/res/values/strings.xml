@@ -4,7 +4,7 @@
     <string name="fileProviderAuthority">it.payto.seller.fileprovider</string>
     <string name="launchUrl">https://payto.fly.dev/seller</string>
     <string name="hostName">payto.fly.dev</string>
-    <string name="fallbackStrategy">customtabs</string>
+    <string name="fallbackStrategy">webview</string>
     <string name="assetStatements">
         [{
             \"relation\": [\"delegate_permission/common.handle_all_urls\"],

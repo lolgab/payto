@@ -73,7 +73,7 @@ android {
 
             resValue("string", "launchUrl", "https://payto.fly.dev/")
             resValue("string", "hostName", "payto.fly.dev")
-            resValue("string", "fallbackStrategy", "customtabs")
+            resValue("string", "fallbackStrategy", "webview")
             resValue(
                 "string",
                 "assetStatements",
