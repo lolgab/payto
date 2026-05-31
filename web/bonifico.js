@@ -1,6 +1,7 @@
 const $ = (id) => document.getElementById(id);
 
-const STORAGE_KEY = 'payto-epc-config';
+const STORAGE_KEY = 'payto-bonifico-config';
+const LEGACY_STORAGE_KEY = 'payto-epc-config';
 const CAUSALE_MAX = 140;
 
 let config = null;
@@ -38,9 +39,21 @@ function isValidIban(iban) {
   return remainder === 1;
 }
 
+function readStoredConfig() {
+  let raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) {
+    raw = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (raw) {
+      localStorage.setItem(STORAGE_KEY, raw);
+      localStorage.removeItem(LEGACY_STORAGE_KEY);
+    }
+  }
+  return raw;
+}
+
 function loadConfig() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = readStoredConfig();
     if (!raw) return null;
     const data = JSON.parse(raw);
     const iban = normalizeIban(data.iban || '');

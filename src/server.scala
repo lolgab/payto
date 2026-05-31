@@ -124,10 +124,14 @@ object Main extends IOApp.Simple:
         serveWebPage("seller.html")
       case GET -> Root / "seller.html" =>
         MovedPermanently(Location(uri"/seller"))
+      case GET -> Root / "bonifico" =>
+        serveWebPage("bonifico.html")
+      case GET -> Root / "bonifico.html" =>
+        MovedPermanently(Location(uri"/bonifico"))
       case GET -> Root / "epc" =>
-        serveWebPage("epc.html")
+        MovedPermanently(Location(uri"/bonifico"))
       case GET -> Root / "epc.html" =>
-        MovedPermanently(Location(uri"/epc"))
+        MovedPermanently(Location(uri"/bonifico"))
       case GET -> Root / ".well-known" / "assetlinks.json" =>
         serveAssetLinks
     }
