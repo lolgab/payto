@@ -2,6 +2,8 @@ package it.payto.seller
 
 import android.net.Uri
 import android.os.Build
+import android.view.ViewGroup
+import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -11,22 +13,28 @@ import com.google.androidbrowserhelper.trusted.WebViewFallbackActivity
 /** WebView fullscreen con intercept di payto-seller:// per avviare HCE dalla PWA. */
 class PaytoSellerWebViewFallbackActivity : WebViewFallbackActivity() {
 
-    override fun createWebViewClient(): WebViewClient {
-        val base = super.createWebViewClient()
-        return object : WebViewClient() {
+    override fun onCreate(savedInstanceState: android.os.Bundle?) {
+        super.onCreate(savedInstanceState)
+        attachSellerBridge()
+    }
+
+    private fun attachSellerBridge() {
+        val webView = findContentWebView() ?: return
+        val defaultClient = webView.webViewClient
+        webView.webViewClient = object : WebViewClient() {
             @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 if (interceptSellerScheme(view, request.url)) return true
-                return base.shouldOverrideUrlLoading(view, request)
+                return defaultClient.shouldOverrideUrlLoading(view, request)
             }
 
             override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
                 if (interceptSellerScheme(view, Uri.parse(url))) return true
-                return base.shouldOverrideUrlLoading(view, url)
+                return defaultClient.shouldOverrideUrlLoading(view, url)
             }
 
-            override fun onRenderProcessGone(view: WebView, detail: android.webkit.RenderProcessGoneDetail): Boolean {
-                return base.onRenderProcessGone(view, detail)
+            override fun onRenderProcessGone(view: WebView, detail: RenderProcessGoneDetail): Boolean {
+                return defaultClient.onRenderProcessGone(view, detail)
             }
         }
     }
@@ -35,5 +43,10 @@ class PaytoSellerWebViewFallbackActivity : WebViewFallbackActivity() {
         if (uri.scheme != "payto-seller") return false
         SellerNfcBridge.handle(view.context, uri)
         return true
+    }
+
+    private fun findContentWebView(): WebView? {
+        val content = window.decorView.findViewById<ViewGroup>(android.R.id.content) ?: return null
+        return if (content.childCount > 0) content.getChildAt(0) as? WebView else null
     }
 }
