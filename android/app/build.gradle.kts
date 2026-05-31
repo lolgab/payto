@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "it.payto.wallet"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "it.payto.wallet"
