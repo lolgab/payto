@@ -6,6 +6,7 @@
 *.log
 data/
 *.jar
+!android/gradle/wrapper/gradle-wrapper.jar
 /out
 android/.gradle/
 android/**/build/
