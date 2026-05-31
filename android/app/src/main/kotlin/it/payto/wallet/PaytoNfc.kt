@@ -5,6 +5,7 @@ import android.nfc.NdefMessage
 import android.nfc.NdefRecord
 import android.nfc.NfcAdapter
 
+/** Estrae payto:// da intent VIEW o NDEF_DISCOVERED (come QR / deep link). */
 object PaytoNfc {
 
     fun extractPaytoUri(intent: Intent?): String? {
@@ -30,8 +31,10 @@ object PaytoNfc {
         return null
     }
 
-    fun toWebLaunchUrl(paytoUri: String): String {
-        val origin = BuildConfig.WEB_ORIGIN.trimEnd('/')
-        return "$origin/?uri=${java.net.URLEncoder.encode(paytoUri, Charsets.UTF_8.name())}"
+    fun applyPaytoIntent(intent: Intent) {
+        if (intent.data != null) return
+        extractPaytoUri(intent)?.let { payto ->
+            intent.data = android.net.Uri.parse(payto)
+        }
     }
 }

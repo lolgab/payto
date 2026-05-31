@@ -9,7 +9,7 @@ Due app Android separate (stesso progetto Gradle):
 
 Entrambe aprono la PWA a **schermo intero** via Chrome Trusted Web Activity. Il wallet ha handler nativo per `payto://`; la cassa apre solo `/seller`.
 
-Il QR resta `payto://iban/…` — nessun HTTPS nel codice QR.
+Il QR e il tag NFC contengono lo stesso `payto://iban/…` — Android apre il wallet come per un deep link (intent filter + protocol handler).
 
 ## Architettura (wallet)
 
