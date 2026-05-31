@@ -77,10 +77,27 @@ async function apiFetch(url, opts = {}) {
 
 function show(name) {
   screens.forEach((s) => { $(s).hidden = s !== name; });
+  document.querySelector('.app').classList.toggle('is-paying', name === 'payment');
 }
 
 function fmtIban(iban) {
   return iban ? iban.replace(/(.{4})/g, '$1 ').trim() : '—';
+}
+
+function formatPayAmount(value, currency) {
+  const parts = new Intl.NumberFormat('it-IT', {
+    style: 'currency',
+    currency: currency || 'EUR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).formatToParts(value);
+  const symbol = parts.find((x) => x.type === 'currency')?.value || '';
+  const digits = parts
+    .filter((x) => x.type !== 'currency' && x.type !== 'literal')
+    .map((x) => x.value)
+    .join('')
+    .trim();
+  return { symbol, digits };
 }
 
 function fmtMoney(amount, currency) {
@@ -107,14 +124,32 @@ async function lookupRecipient(iban) {
   return res.json();
 }
 
+function setOptionalRow(id, value) {
+  const row = $(id);
+  if (!row) return;
+  const showRow = Boolean(value && value !== '—');
+  row.hidden = !showRow;
+}
+
 function showPayment(p) {
+  $('pay-from-iban').textContent = me ? fmtIban(me.iban) : '—';
   $('f-iban').textContent = fmtIban(p.iban) || '—';
   $('f-bic').textContent = p.bic || '—';
-  $('f-amount').textContent = p.amount
-    ? p.amount.formatted + ' ' + p.amount.currency
-    : '—';
-  $('f-receiver').textContent = p.receiverName || '—';
+  $('f-receiver').textContent = p.receiverName || 'Destinatario';
   $('f-message').textContent = p.message || '—';
+
+  const amountEl = $('f-amount');
+  if (p.amount) {
+    const { symbol, digits } = formatPayAmount(p.amount.value, p.amount.currency);
+    amountEl.innerHTML =
+      '<span class="pay-amount-symbol">' + symbol + '</span>' +
+      '<span class="pay-amount-value">' + digits + '</span>';
+  } else {
+    amountEl.textContent = '—';
+  }
+
+  setOptionalRow('row-bic', p.bic);
+  setOptionalRow('row-message', p.message);
 
   const errors = [];
   if (p.authority !== 'iban') errors.push('In questa demo sono supportati solo pagamenti IBAN');
@@ -146,7 +181,7 @@ function refreshPayButton() {
     return;
   }
   if (paying) return;
-  btn.textContent = 'Paga ora';
+  btn.textContent = 'Conferma pagamento';
   btn.disabled = paymentErrors.length > 0;
 }
 

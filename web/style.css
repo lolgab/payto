@@ -180,6 +180,250 @@ body {
   font-size: 1rem;
 }
 
+/* --- Payment confirmation (Apple Pay / Revolut style) --- */
+
+.app.is-paying .account-card {
+  opacity: 0.55;
+  transform: scale(0.97);
+  transition: opacity 0.25s, transform 0.25s;
+}
+
+.app.is-paying .top-bar {
+  padding-bottom: 1.5rem;
+}
+
+.payment-screen {
+  padding: 0 1rem 1.5rem;
+}
+
+.pay-sheet {
+  background: var(--surface);
+  border-radius: calc(var(--radius) + 4px);
+  padding: 1.75rem 1.35rem 1.35rem;
+  box-shadow: var(--shadow-lg);
+  margin-top: -0.5rem;
+  position: relative;
+  z-index: 2;
+}
+
+.pay-prompt {
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  margin-bottom: 1.5rem;
+  line-height: 1.4;
+}
+
+.pay-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.75rem;
+}
+
+.pay-party {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius-sm);
+  background: #f8fafc;
+  border: 1px solid var(--border);
+}
+
+.pay-party-from {
+  background: linear-gradient(135deg, #f0f7ff 0%, #f8fafc 100%);
+  border-color: #bfdbfe;
+}
+
+.pay-party-to {
+  background: linear-gradient(135deg, #f0fdf4 0%, #f8fafc 100%);
+  border-color: #bbf7d0;
+}
+
+.pay-party-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.pay-party-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: -0.02em;
+}
+
+.pay-party-iban {
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  color: var(--text);
+  word-break: break-all;
+  line-height: 1.45;
+  margin-top: 0.15rem;
+}
+
+.pay-party-to .pay-party-iban {
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+}
+
+.pay-flow-arrow {
+  display: flex;
+  justify-content: center;
+  color: var(--text-muted);
+  opacity: 0.6;
+  margin: -0.15rem 0;
+}
+
+.pay-amount-block {
+  text-align: center;
+  padding: 1.5rem 0.5rem;
+  margin-bottom: 0.5rem;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.pay-amount-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.pay-amount {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.15rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.pay-amount-symbol {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--navy);
+  opacity: 0.85;
+}
+
+.pay-amount-value {
+  font-size: 3.25rem;
+  font-weight: 800;
+  color: var(--navy);
+}
+
+.pay-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 1.25rem;
+}
+
+.pay-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  font-size: 0.88rem;
+  padding: 0.65rem 0.85rem;
+  background: #f8fafc;
+  border-radius: var(--radius-sm);
+}
+
+.pay-meta-label {
+  color: var(--text-muted);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.pay-meta-value {
+  font-weight: 600;
+  color: var(--text);
+  text-align: right;
+  word-break: break-word;
+}
+
+.pay-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 1.5rem;
+}
+
+.btn-pay-confirm {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 1.05rem 1.25rem;
+  border: none;
+  border-radius: 14px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  background: linear-gradient(160deg, #007aff 0%, #0051d5 100%);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(0, 102, 204, 0.35);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s, box-shadow 0.15s;
+}
+
+.btn-pay-confirm:hover:not(:disabled) {
+  box-shadow: 0 6px 20px rgba(0, 102, 204, 0.45);
+}
+
+.btn-pay-confirm:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-pay-confirm:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-pay-icon {
+  display: flex;
+  align-items: center;
+}
+
+.btn-pay-cancel {
+  width: 100%;
+  padding: 0.85rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-pay-cancel:hover {
+  color: var(--text);
+  background: #f1f5f9;
+}
+
+.pay-sheet .errors {
+  margin-top: 1.25rem;
+}
+
 .hint {
   color: var(--text-muted);
   line-height: 1.6;

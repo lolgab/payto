@@ -44,20 +44,57 @@
       <p id="home-status" class="status"></p>
     </main>
 
-    <main id="payment" class="screen" hidden>
-      <div class="detail-card">
-        <h2>Conferma pagamento</h2>
-        <dl class="detail-list">
-          <dt>Destinatario (IBAN)</dt><dd id="f-iban">—</dd>
-          <dt>BIC</dt><dd id="f-bic">—</dd>
-          <dt>Importo</dt><dd id="f-amount" class="amount-value">—</dd>
-          <dt>Beneficiario</dt><dd id="f-receiver">—</dd>
-          <dt>Causale</dt><dd id="f-message">—</dd>
-        </dl>
+    <main id="payment" class="screen payment-screen" hidden>
+      <div class="pay-sheet">
+        <p class="pay-prompt">Vuoi effettuare questo pagamento?</p>
+
+        <div class="pay-flow">
+          <div class="pay-party pay-party-from">
+            <span class="pay-party-label">Da</span>
+            <span class="pay-party-name">Il tuo conto</span>
+            <span class="pay-party-iban" id="pay-from-iban">—</span>
+          </div>
+          <div class="pay-flow-arrow" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M12 5v14M5 12l7 7 7-7"/>
+            </svg>
+          </div>
+          <div class="pay-party pay-party-to">
+            <span class="pay-party-label">A</span>
+            <span class="pay-party-name" id="f-receiver">—</span>
+            <span class="pay-party-iban" id="f-iban">—</span>
+          </div>
+        </div>
+
+        <div class="pay-amount-block">
+          <span class="pay-amount-label">Importo</span>
+          <p class="pay-amount" id="f-amount" aria-live="polite">—</p>
+        </div>
+
+        <div class="pay-meta">
+          <div class="pay-meta-row" id="row-bic" hidden>
+            <span class="pay-meta-label">BIC</span>
+            <span class="pay-meta-value" id="f-bic">—</span>
+          </div>
+          <div class="pay-meta-row" id="row-message" hidden>
+            <span class="pay-meta-label">Causale</span>
+            <span class="pay-meta-value" id="f-message">—</span>
+          </div>
+        </div>
+
         <ul id="errors" class="errors"></ul>
-        <div class="actions">
-          <button type="button" id="btn-pay" class="btn btn-primary">Paga ora</button>
-          <button type="button" id="btn-cancel" class="btn btn-secondary">Annulla</button>
+
+        <div class="pay-actions">
+          <button type="button" id="btn-pay" class="btn btn-pay-confirm">
+            <span class="btn-pay-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <path d="M9 12l2 2 4-4"/>
+              </svg>
+            </span>
+            Conferma pagamento
+          </button>
+          <button type="button" id="btn-cancel" class="btn btn-pay-cancel">Annulla</button>
         </div>
       </div>
     </main>
@@ -72,6 +109,6 @@
     </main>
   </div>
   <script src="/pwa-install.js"></script>
-  <script src="/app.js?v=2"></script>
+  <script src="/app.js?v=3"></script>
 </body>
 </html>
