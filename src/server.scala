@@ -11,6 +11,7 @@ import com.comcast.ip4s.*
 import org.http4s.*
 import org.http4s.dsl.io.*
 import org.http4s.headers.Location
+import org.http4s.headers.`Content-Type`
 import org.http4s.implicits.uri
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.staticcontent.*
