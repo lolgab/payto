@@ -1,27 +1,46 @@
 package it.payto.wallet
 
+import android.app.PendingIntent
 import android.content.Intent
-import android.net.Uri
-import android.nfc.NdefMessage
-import android.nfc.NdefRecord
+import android.content.IntentFilter
 import android.nfc.NfcAdapter
-import android.os.Bundle
 import com.google.androidbrowserhelper.trusted.LauncherActivity
+import com.google.androidbrowserhelper.trusted.LauncherActivityMetadata
+import com.google.androidbrowserhelper.trusted.TwaLauncher
+import com.google.androidbrowserhelper.trusted.WebViewFallbackActivity
 
 /**
  * TWA launcher: apre la PWA a schermo intero e converte payto:// in /?uri=… sulla stessa origine.
- * Normalizza gli intent NFC (NDEF_DISCOVERED) impostando data=payto://… prima del launch.
+ * Abilita NFC foreground dispatch quando l'activity è visibile.
  */
 class PaytoLauncherActivity : LauncherActivity() {
 
-    override fun getProtocolHandlers(): Map<String, Uri> {
+    private var nfcAdapter: NfcAdapter? = null
+    private var nfcPendingIntent: PendingIntent? = null
+
+    override fun getProtocolHandlers(): Map<String, android.net.Uri> {
         val origin = BuildConfig.WEB_ORIGIN.trimEnd('/')
-        return mapOf("payto" to Uri.parse("$origin/?uri=%s"))
+        return mapOf("payto" to android.net.Uri.parse("$origin/?uri=%s"))
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+    override fun getFallbackStrategy(): TwaLauncher.FallbackStrategy {
+        return TwaLauncher.FallbackStrategy { context, twaBuilder, _, completionCallback ->
+            val metadata = LauncherActivityMetadata.parse(context)
+            val intent = WebViewFallbackActivity.createLaunchIntent(
+                context,
+                twaBuilder.uri,
+                metadata,
+            )
+            intent.setClass(context, PaytoWebViewFallbackActivity::class.java)
+            context.startActivity(intent)
+            completionCallback?.run()
+        }
+    }
+
+    override fun onCreate(savedInstanceState: android.os.Bundle?) {
         normalizeNfcIntent(intent)
         super.onCreate(savedInstanceState)
+        nfcAdapter = NfcAdapter.getDefaultAdapter(this)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -30,27 +49,33 @@ class PaytoLauncherActivity : LauncherActivity() {
         super.onNewIntent(intent)
     }
 
-    private fun normalizeNfcIntent(intent: Intent) {
-        if (intent.data != null) return
-        extractPaytoUri(intent)?.let { intent.data = it }
+    override fun onResume() {
+        super.onResume()
+        val adapter = nfcAdapter ?: return
+        val pending = nfcPendingIntent ?: PendingIntent.getActivity(
+            this,
+            0,
+            Intent(this, javaClass).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+        ).also { nfcPendingIntent = it }
+
+        val filters = arrayOf(
+            IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED).apply {
+                addDataScheme("payto")
+            },
+        )
+        adapter.enableForegroundDispatch(this, pending, filters, null)
     }
 
-    private fun extractPaytoUri(intent: Intent): Uri? {
-        if (NfcAdapter.ACTION_NDEF_DISCOVERED != intent.action) return null
+    override fun onPause() {
+        super.onPause()
+        nfcAdapter?.disableForegroundDispatch(this)
+    }
 
-        @Suppress("DEPRECATION")
-        val rawMessages = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)
-            ?: return null
-
-        for (raw in rawMessages) {
-            val message = raw as? NdefMessage ?: continue
-            for (record in message.records) {
-                if (record.tnf != NdefRecord.TNF_WELL_KNOWN) continue
-                if (!record.type.contentEquals(NdefRecord.RTD_URI)) continue
-                val uri = record.toUri()
-                if ("payto" == uri.scheme) return uri
-            }
+    private fun normalizeNfcIntent(intent: Intent) {
+        if (intent.data != null) return
+        PaytoNfc.extractPaytoUri(intent)?.let { payto ->
+            intent.data = android.net.Uri.parse(payto)
         }
-        return null
     }
 }

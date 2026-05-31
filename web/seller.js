@@ -109,11 +109,8 @@ function showPaymentReceived(data) {
 }
 
 function invokeSellerApp(path) {
-  const iframe = document.createElement('iframe');
-  iframe.hidden = true;
-  iframe.src = `payto-seller://${path}`;
-  document.body.appendChild(iframe);
-  setTimeout(() => iframe.remove(), 500);
+  // Navigazione main-frame: WebView intercetta payto-seller:// (iframe non funziona).
+  window.location.href = `payto-seller://${path}`;
 }
 
 function startNativeNfc(uri) {
