@@ -4,22 +4,26 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#0d3b66">
-  <title>PayTo — QR EPC</title>
+  <title>PayTo — QR Bonifico</title>
   <link rel="icon" href="/icons/seller.svg">
   <link rel="stylesheet" href="/seller.css">
   <style>
-    .epc-form { display: flex; flex-direction: column; gap: 1rem; flex: 1; min-height: 0; }
-    .epc-field { display: flex; flex-direction: column; gap: 0.35rem; }
+    .epc-form { display: flex; flex-direction: column; gap: 1rem; flex: 1; min-height: 0; overflow-y: auto; }
+    .epc-field { display: flex; flex-direction: column; gap: 0.35rem; flex-shrink: 0; }
     .epc-field label {
       font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
       letter-spacing: 0.05em; color: var(--text-muted);
     }
-    .epc-field input {
+    .epc-field input, .epc-field textarea {
       width: 100%; padding: 0.85rem 1rem; border: 1px solid var(--border);
       border-radius: 12px; font-size: 1rem; background: var(--surface);
-      font-variant-numeric: tabular-nums;
+      font-variant-numeric: tabular-nums; font-family: inherit;
+      resize: vertical;
     }
-    .epc-field input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .epc-field textarea { min-height: 2.75rem; max-height: 5rem; line-height: 1.35; }
+    .epc-field input:focus, .epc-field textarea:focus {
+      outline: 2px solid var(--accent); outline-offset: 1px;
+    }
     .epc-field-hint { font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
     .epc-error { color: #dc2626; font-size: 0.85rem; min-height: 1.2rem; }
     .epc-settings {
@@ -28,6 +32,10 @@
       border-radius: 6px;
     }
     .epc-settings:active { background: rgba(255,255,255,0.15); }
+    .epc-causale-wrap { flex-shrink: 0; margin-bottom: 0.75rem; }
+    .epc-causale-wrap textarea { min-height: 2.5rem; max-height: 4rem; }
+    #screen-input .pos-keypad { flex: 1; min-height: 0; }
+    #screen-input .pos-display { margin-bottom: 0.75rem; }
   </style>
   <script src="/qr-creator.min.js"></script>
 </head>
@@ -43,9 +51,9 @@
             <path d="M14 17h7M17.5 14v7"/>
           </svg>
         </div>
-        <span>QR EPC</span>
+        <span>QR Bonifico</span>
       </div>
-      <button id="btn-settings" class="epc-settings" type="button" hidden>IBAN</button>
+      <button id="btn-settings" class="epc-settings" type="button" hidden>Impostazioni</button>
       <span id="iban-display" class="pos-shop" hidden>—</span>
     </header>
 
@@ -63,8 +71,14 @@
           <div class="epc-field">
             <label for="input-name">Intestatario</label>
             <input id="input-name" name="name" type="text" maxlength="70"
-              autocomplete="organization" placeholder="Nome beneficiario">
-            <p class="epc-field-hint">Obbligatorio nel QR EPC (max 70 caratteri).</p>
+              autocomplete="organization" placeholder="Nome beneficiario" required>
+            <p class="epc-field-hint">Nome che compare nel bonifico (max 70 caratteri).</p>
+          </div>
+          <div class="epc-field">
+            <label for="input-causale-template">Causale predefinita</label>
+            <textarea id="input-causale-template" name="causaleTemplate" maxlength="140"
+              rows="2" placeholder="Es. Pagamento ordine" spellcheck="false"></textarea>
+            <p class="epc-field-hint">Opzionale. Proposta a ogni incasso; puoi cambiarla per singolo pagamento.</p>
           </div>
           <p id="setup-error" class="epc-error" aria-live="polite"></p>
           <button type="submit" class="pos-enter">Salva e continua</button>
@@ -75,6 +89,11 @@
         <p class="pos-label">Importo da incassare</p>
         <div class="pos-display">
           <span id="amount-display" class="pos-amount">€ 0,00</span>
+        </div>
+        <div class="epc-field epc-causale-wrap">
+          <label for="input-causale">Causale</label>
+          <textarea id="input-causale" maxlength="140" rows="2"
+            placeholder="Descrizione del pagamento" spellcheck="false"></textarea>
         </div>
         <div class="pos-keypad">
           <button class="key" data-key="7">7</button>
@@ -97,9 +116,10 @@
         <div class="nfc-panel">
           <p id="qr-amount" class="nfc-amount">€ 0,00</p>
           <div class="nfc-qr-wrap">
-            <canvas id="payment-qr" class="nfc-qr" aria-label="Codice QR EPC"></canvas>
+            <canvas id="payment-qr" class="nfc-qr" aria-label="Codice QR bonifico"></canvas>
           </div>
           <p class="nfc-qr-hint">Scansiona con l'app della tua banca</p>
+          <p id="qr-causale" class="nfc-status" hidden></p>
           <p id="qr-iban" class="nfc-status"></p>
           <button id="btn-cancel" class="pos-cancel">Nuovo importo</button>
         </div>

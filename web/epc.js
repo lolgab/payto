@@ -1,6 +1,7 @@
 const $ = (id) => document.getElementById(id);
 
 const STORAGE_KEY = 'payto-epc-config';
+const CAUSALE_MAX = 140;
 
 let config = null;
 let cents = 0;
@@ -22,6 +23,10 @@ function normalizeIban(raw) {
   return raw.replace(/\s/g, '').toUpperCase();
 }
 
+function normalizeCausale(raw) {
+  return (raw || '').trim().slice(0, CAUSALE_MAX);
+}
+
 function isValidIban(iban) {
   if (!/^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$/.test(iban)) return false;
   const rearranged = iban.slice(4) + iban.slice(0, 4);
@@ -41,7 +46,11 @@ function loadConfig() {
     const iban = normalizeIban(data.iban || '');
     const name = (data.name || '').trim();
     if (!isValidIban(iban) || !name) return null;
-    return { iban, name: name.slice(0, 70) };
+    return {
+      iban,
+      name: name.slice(0, 70),
+      causaleTemplate: normalizeCausale(data.causaleTemplate),
+    };
   } catch {
     return null;
   }
@@ -50,6 +59,18 @@ function loadConfig() {
 function saveConfig(next) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   config = next;
+}
+
+function defaultCausale() {
+  return config?.causaleTemplate || '';
+}
+
+function resetPaymentCausale() {
+  $('input-causale').value = defaultCausale();
+}
+
+function paymentCausale() {
+  return normalizeCausale($('input-causale').value);
 }
 
 function show(name) {
@@ -85,10 +106,11 @@ function backspace() {
 
 function clearAmount() {
   cents = 0;
+  resetPaymentCausale();
   refreshDisplay();
 }
 
-function buildEpcPayload(amount) {
+function buildEpcPayload(amount, causale) {
   const lines = [
     'BCD',
     '002',
@@ -98,6 +120,10 @@ function buildEpcPayload(amount) {
     config.name,
     config.iban,
     `EUR${amount.toFixed(2)}`,
+    '',
+    '',
+    causale,
+    '',
   ];
   return lines.join('\n');
 }
@@ -118,9 +144,18 @@ function renderPaymentQr(payload) {
 
 function showQr() {
   const amount = cents / 100;
+  const causale = paymentCausale();
   $('qr-amount').textContent = fmtCents(cents);
   $('qr-iban').textContent = `${config.name} · ${fmtIban(config.iban)}`;
-  renderPaymentQr(buildEpcPayload(amount));
+  const causaleEl = $('qr-causale');
+  if (causale) {
+    causaleEl.textContent = causale;
+    causaleEl.hidden = false;
+  } else {
+    causaleEl.textContent = '';
+    causaleEl.hidden = true;
+  }
+  renderPaymentQr(buildEpcPayload(amount, causale));
   show('screen-qr');
 }
 
@@ -133,9 +168,11 @@ function openSetup(prefill = true) {
   if (prefill && config) {
     $('input-iban').value = fmtIban(config.iban);
     $('input-name').value = config.name;
+    $('input-causale-template').value = config.causaleTemplate || '';
   } else {
     $('input-iban').value = '';
     $('input-name').value = '';
+    $('input-causale-template').value = '';
   }
   $('setup-error').textContent = '';
   show('screen-setup');
@@ -156,6 +193,7 @@ $('setup-form').addEventListener('submit', (e) => {
   e.preventDefault();
   const iban = normalizeIban($('input-iban').value);
   const name = $('input-name').value.trim().slice(0, 70);
+  const causaleTemplate = normalizeCausale($('input-causale-template').value);
   if (!isValidIban(iban)) {
     $('setup-error').textContent = 'IBAN non valido';
     return;
@@ -164,7 +202,7 @@ $('setup-form').addEventListener('submit', (e) => {
     $('setup-error').textContent = 'Inserisci il nome del beneficiario';
     return;
   }
-  saveConfig({ iban, name });
+  saveConfig({ iban, name, causaleTemplate });
   updateHeader();
   clearAmount();
   show('screen-input');
@@ -185,6 +223,7 @@ $('btn-settings').onclick = () => openSetup();
 
 document.addEventListener('keydown', (e) => {
   if ($('screen-input').hidden) return;
+  if (e.target.matches('textarea, input')) return;
   if (e.key >= '0' && e.key <= '9') { digit(Number(e.key)); e.preventDefault(); }
   else if (e.key === 'Backspace') { backspace(); e.preventDefault(); }
   else if (e.key === 'Escape') { clearAmount(); e.preventDefault(); }
