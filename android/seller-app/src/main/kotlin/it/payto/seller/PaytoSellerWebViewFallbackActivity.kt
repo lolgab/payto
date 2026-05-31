@@ -14,7 +14,18 @@ import com.google.androidbrowserhelper.trusted.WebViewFallbackActivity
 class PaytoSellerWebViewFallbackActivity : WebViewFallbackActivity() {
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
+        val httpLaunchUrl = intent.getParcelableExtra<Uri>(LAUNCH_URL_EXTRA)
+        if (httpLaunchUrl?.scheme == "http") {
+            // WebViewFallbackActivity accetta solo https; in debug usiamo http locale.
+            intent.putExtra(
+                LAUNCH_URL_EXTRA,
+                httpLaunchUrl.buildUpon().scheme("https").build(),
+            )
+        }
         super.onCreate(savedInstanceState)
+        if (httpLaunchUrl?.scheme == "http") {
+            findContentWebView()?.loadUrl(httpLaunchUrl.toString())
+        }
         attachSellerBridge()
     }
 
@@ -48,5 +59,10 @@ class PaytoSellerWebViewFallbackActivity : WebViewFallbackActivity() {
     private fun findContentWebView(): WebView? {
         val content = window.decorView.findViewById<ViewGroup>(android.R.id.content) ?: return null
         return if (content.childCount > 0) content.getChildAt(0) as? WebView else null
+    }
+
+    private companion object {
+        private const val LAUNCH_URL_EXTRA =
+            "com.google.browser.examples.twawebviewfallback.WebViewFallbackActivity.LAUNCH_URL"
     }
 }

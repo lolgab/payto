@@ -3,6 +3,7 @@ package it.payto.wallet
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.IntentFilter
+import android.net.Uri
 import android.nfc.NfcAdapter
 import com.google.androidbrowserhelper.trusted.WebViewFallbackActivity
 
@@ -15,7 +16,18 @@ class PaytoWebViewFallbackActivity : WebViewFallbackActivity() {
     private var nfcAdapter: NfcAdapter? = null
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
+        val httpLaunchUrl = intent.getParcelableExtra<Uri>(LAUNCH_URL_EXTRA)
+        if (httpLaunchUrl?.scheme == "http") {
+            intent.putExtra(
+                LAUNCH_URL_EXTRA,
+                httpLaunchUrl.buildUpon().scheme("https").build(),
+            )
+        }
         super.onCreate(savedInstanceState)
+        if (httpLaunchUrl?.scheme == "http") {
+            val content = window.decorView.findViewById<android.view.ViewGroup>(android.R.id.content)
+            (content?.getChildAt(0) as? android.webkit.WebView)?.loadUrl(httpLaunchUrl.toString())
+        }
         nfcAdapter = NfcAdapter.getDefaultAdapter(this)
     }
 
@@ -40,5 +52,10 @@ class PaytoWebViewFallbackActivity : WebViewFallbackActivity() {
     override fun onPause() {
         super.onPause()
         nfcAdapter?.disableForegroundDispatch(this)
+    }
+
+    private companion object {
+        private const val LAUNCH_URL_EXTRA =
+            "com.google.browser.examples.twawebviewfallback.WebViewFallbackActivity.LAUNCH_URL"
     }
 }

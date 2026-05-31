@@ -24,18 +24,13 @@ class PaytoSellerLauncherActivity : LauncherActivity() {
     }
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
-        if (SellerNfcBridge.handleIntent(this, intent)) {
-            finish()
-            return
-        }
+        SellerNfcBridge.handleIntent(this, intent)
         super.onCreate(savedInstanceState)
     }
 
     override fun onNewIntent(intent: Intent) {
-        if (SellerNfcBridge.handleIntent(this, intent)) {
-            finish()
-            return
-        }
+        SellerNfcBridge.handleIntent(this, intent)
+        setIntent(intent)
         super.onNewIntent(intent)
     }
 }
