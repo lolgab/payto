@@ -11,7 +11,7 @@ echoerr() {
   echo "$@" >&2
 }
 
-SCALA_CLI_VERSION="1.14.0"
+SCALA_CLI_VERSION="1.13.0"
 
 GH_ORG="VirtusLab"
 GH_NAME="scala-cli"
