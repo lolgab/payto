@@ -124,7 +124,7 @@ async function startNfc() {
     return;
   }
 
-  if (!('NDEFWriter' in window)) {
+  if (!('NDEFReader' in window)) {
     $('nfc-status').textContent =
       'Mostra il codice QR al cliente per pagare';
     startPolling();
@@ -132,8 +132,8 @@ async function startNfc() {
   }
 
   try {
-    const writer = new NDEFWriter();
-    await writer.write({
+    const ndef = new NDEFReader();
+    await ndef.write({
       records: [{ recordType: 'url', data: pendingUri }],
     });
     $('nfc-status').textContent = 'In attesa del pagamento…';
