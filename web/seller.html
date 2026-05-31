@@ -6,8 +6,9 @@
   <meta name="theme-color" content="#0d3b66">
   <title>PayTo — Cassa</title>
   <link rel="manifest" href="/seller.webmanifest">
-  <link rel="icon" href="/icons/icon.svg">
+  <link rel="icon" href="/icons/seller.svg">
   <link rel="stylesheet" href="/seller.css">
+  <link rel="stylesheet" href="/pwa-install.css">
   <script src="/qr-creator.min.js"></script>
 </head>
 <body>
@@ -45,7 +46,7 @@
           <button class="key" data-key="0">0</button>
           <button class="key key-fn" data-key="back">⌫</button>
         </div>
-        <button id="btn-enter" class="pos-enter" disabled>OK</button>
+        <button id="btn-enter" class="pos-enter" disabled>Continua</button>
       </section>
 
       <section id="screen-nfc" class="pos-screen" hidden>
@@ -82,6 +83,7 @@
       </section>
     </div>
   </div>
+  <script src="/pwa-install.js"></script>
   <script src="/seller.js"></script>
 </body>
 </html>

@@ -1,14 +1,14 @@
 {
   "id": "/",
-  "name": "PayTo Banca",
-  "short_name": "PayTo",
+  "name": "PayTo Pagamenti",
+  "short_name": "Pagamenti",
   "lang": "it",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#eef2f7",
   "theme_color": "#0d3b66",
-  "icons": [{ "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }],
+  "icons": [{ "src": "/icons/client.svg", "sizes": "any", "type": "image/svg+xml" }],
   "protocol_handlers": [
     { "protocol": "web+payto", "url": "/?uri=%s" },
     { "protocol": "payto", "url": "/?uri=%s" }

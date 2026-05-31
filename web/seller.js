@@ -126,7 +126,7 @@ async function startNfc() {
 
   if (!('NDEFWriter' in window)) {
     $('nfc-status').textContent =
-      'Web NFC non disponibile (serve Chrome su Android + HTTPS/localhost)';
+      'Mostra il codice QR al cliente per pagare';
     startPolling();
     return;
   }
@@ -140,11 +140,14 @@ async function startNfc() {
     startPolling();
   } catch (e) {
     if (e.name === 'NotAllowedError') {
-      $('nfc-status').textContent = 'Permesso NFC negato';
+      $('nfc-status').textContent =
+        'Avvicinamento non attivo — il cliente può pagare scansionando il QR';
     } else if (e.name === 'NotSupportedError') {
-      $('nfc-status').textContent = 'NFC non supportato su questo dispositivo';
+      $('nfc-status').textContent =
+        'Mostra il codice QR al cliente per pagare';
     } else {
-      $('nfc-status').textContent = e.message || 'Scrittura NFC non riuscita';
+      $('nfc-status').textContent =
+        e.message || 'Mostra il codice QR al cliente per pagare';
     }
     startPolling();
   }

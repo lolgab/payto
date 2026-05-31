@@ -4,10 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0d3b66">
-  <title>PayTo — Banca</title>
+  <title>PayTo — Pagamenti</title>
   <link rel="manifest" href="/manifest.webmanifest">
-  <link rel="icon" href="/icons/icon.svg">
+  <link rel="icon" href="/icons/client.svg">
   <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/pwa-install.css">
 </head>
 <body>
   <div class="app">
@@ -19,7 +20,7 @@
             <path d="M3 10h18"/>
           </svg>
         </div>
-        <span class="brand-name">PayTo</span>
+        <span class="brand-name">PayTo Pagamenti</span>
       </div>
       <span class="top-badge">Conto corrente</span>
     </header>
@@ -35,7 +36,7 @@
 
     <main id="home" class="screen">
       <div class="info-card">
-        <p class="hint">Installa l'app, poi avvicina il telefono del commerciante alla cassa. Il dispositivo legge il tag NFC e propone il pagamento con PayTo.</p>
+        <p class="hint">Installa l'app, poi avvicina il telefono alla cassa del negozio. Si aprirà PayTo con l'importo da pagare.</p>
       </div>
       <div class="actions">
         <button type="button" id="btn-demo" class="btn btn-outline">Prova pagamento demo</button>
@@ -70,6 +71,7 @@
       </div>
     </main>
   </div>
+  <script src="/pwa-install.js"></script>
   <script src="/app.js?v=2"></script>
 </body>
 </html>

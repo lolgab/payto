@@ -1,0 +1,81 @@
+.pwa-install {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(13, 59, 102, 0.45);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.pwa-install.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.pwa-install__card {
+  width: 100%;
+  max-width: 380px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.25rem 1.25rem 1rem;
+  box-shadow: 0 8px 32px rgba(13, 59, 102, 0.2);
+  transform: translateY(1rem);
+  transition: transform 0.25s ease;
+}
+
+.pwa-install.is-visible .pwa-install__card {
+  transform: translateY(0);
+}
+
+.pwa-install__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0d3b66;
+  margin-bottom: 0.35rem;
+}
+
+.pwa-install__text {
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: #64748b;
+  margin-bottom: 1rem;
+}
+
+.pwa-install__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.pwa-install__btn {
+  flex: 1;
+  border: none;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.pwa-install__btn--primary {
+  background: #0066cc;
+  color: #fff;
+}
+
+.pwa-install__btn--primary:active {
+  background: #0052a3;
+}
+
+.pwa-install__btn--ghost {
+  background: #eef2f7;
+  color: #64748b;
+}
+
+.pwa-install__btn--ghost:active {
+  background: #e2e8f0;
+}

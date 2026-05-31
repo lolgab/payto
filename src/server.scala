@@ -123,6 +123,8 @@ object Main extends IOApp.Simple:
         serveWebPage("seller.html")
       case GET -> Root / "seller.html" =>
         MovedPermanently(Location(uri"/seller"))
+      case GET -> Root / ".well-known" / "assetlinks.json" =>
+        serveAssetLinks
     }
 
     val static = fileService[IO](FileService.Config("web", ""))
@@ -219,6 +221,12 @@ object Main extends IOApp.Simple:
 
   private def serveWebPage(name: String): IO[Response[IO]] =
     StaticFile.fromPath(FsPath(s"web/$name")).getOrElseF(NotFound())
+
+  private def serveAssetLinks: IO[Response[IO]] =
+    StaticFile
+      .fromPath(FsPath("web/.well-known/assetlinks.json"))
+      .map(_.withContentType(`Content-Type`(MediaType.application.json)))
+      .getOrElseF(NotFound())
 
   private def cookie(id: Long) =
     ResponseCookie("account_id", id.toString, path = Some("/"), maxAge = Some(365 * 24 * 3600))

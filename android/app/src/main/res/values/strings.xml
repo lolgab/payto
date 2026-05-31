@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PayTo</string>
+    <string name="fileProviderAuthority">it.payto.wallet.fileprovider</string>
+    <!-- Sovrascritti da resValue in build.gradle.kts -->
+    <string name="launchUrl">https://payto.fly.dev/</string>
+    <string name="hostName">payto.fly.dev</string>
+    <string name="fallbackStrategy">customtabs</string>
+    <string name="assetStatements">
+        [{
+            \"relation\": [\"delegate_permission/common.handle_all_urls\"],
+            \"target\": {
+                \"namespace\": \"web\",
+                \"site\": \"https://payto.fly.dev\"
+            }
+        }]
+    </string>
+</resources>

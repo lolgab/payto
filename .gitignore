@@ -7,3 +7,9 @@
 data/
 *.jar
 /out
+android/.gradle/
+android/**/build/
+android/local.properties
+android/release.keystore
+*.apk
+*.aab
