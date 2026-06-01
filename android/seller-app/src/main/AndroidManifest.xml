@@ -85,7 +85,13 @@
                     android:scheme="https" />
             </intent-filter>
 
-            <!-- Bridge PWA → emulazione NFC nativa (HCE phone-to-phone) -->
+        </activity>
+
+        <!-- Bridge esterno payto-seller:// (non dal WebView): attiva HCE e termina subito. -->
+        <activity
+            android:name=".SellerNfcBridgeActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
