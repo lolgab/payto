@@ -16,8 +16,7 @@ android {
         versionCode = (findProperty("versionCode") as String?)?.toIntOrNull() ?: 1
         versionName = (findProperty("versionName") as String?)?.toString() ?: "0.1.0"
 
-        val devServer = (project.findProperty("payto.serverUrl") as String?)
-            ?: "http://10.0.2.2:8080"
+        val devServer = rootProject.extra["paytoServerUrl"] as String
         buildConfigField("String", "WEB_ORIGIN", "\"$devServer\"")
     }
 
@@ -42,8 +41,7 @@ android {
             isDebuggable = true
             manifestPlaceholders["usesCleartext"] = "true"
 
-            val devServer = (project.findProperty("payto.serverUrl") as String?)
-                ?: "http://10.0.2.2:8080"
+            val devServer = rootProject.extra["paytoServerUrl"] as String
             val host = URI(devServer).host ?: "10.0.2.2"
             val site = devServer.trimEnd('/') + "/"
 

@@ -5,11 +5,12 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
 import android.nfc.NfcAdapter
+import android.webkit.WebView
 import com.google.androidbrowserhelper.trusted.WebViewFallbackActivity
 
 /**
- * WebView fullscreen. Se PayTo è già aperto e arriva un tag NFC con payto://,
- * inoltra a [PaytoLauncherActivity] — stesso percorso di QR / deep link.
+ * WebView fullscreen con NFC in foreground: reader mode per HCE phone-to-phone
+ * (Realme/OPPO) e foreground dispatch per tag fisici / intent di sistema.
  */
 class PaytoWebViewFallbackActivity : WebViewFallbackActivity() {
 
@@ -25,8 +26,7 @@ class PaytoWebViewFallbackActivity : WebViewFallbackActivity() {
         }
         super.onCreate(savedInstanceState)
         if (httpLaunchUrl?.scheme == "http") {
-            val content = window.decorView.findViewById<android.view.ViewGroup>(android.R.id.content)
-            (content?.getChildAt(0) as? android.webkit.WebView)?.loadUrl(httpLaunchUrl.toString())
+            findContentWebView()?.loadUrl(httpLaunchUrl.toString())
         }
         nfcAdapter = NfcAdapter.getDefaultAdapter(this)
     }
@@ -34,6 +34,7 @@ class PaytoWebViewFallbackActivity : WebViewFallbackActivity() {
     override fun onResume() {
         super.onResume()
         val adapter = nfcAdapter ?: return
+
         val launchPayto = PendingIntent.getActivity(
             this,
             0,
@@ -47,11 +48,36 @@ class PaytoWebViewFallbackActivity : WebViewFallbackActivity() {
             },
         )
         adapter.enableForegroundDispatch(this, launchPayto, filters, null)
+
+        adapter.enableReaderMode(
+            this,
+            { tag ->
+                val payto = PaytoNfc.extractPaytoFromTag(tag) ?: return@enableReaderMode
+                runOnUiThread { openPaytoInWebView(payto) }
+            },
+            NfcAdapter.FLAG_READER_NFC_A or
+                NfcAdapter.FLAG_READER_NFC_B or
+                NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK,
+            null,
+        )
     }
 
     override fun onPause() {
-        super.onPause()
+        nfcAdapter?.disableReaderMode(this)
         nfcAdapter?.disableForegroundDispatch(this)
+        super.onPause()
+    }
+
+    private fun openPaytoInWebView(payto: String) {
+        val origin = BuildConfig.WEB_ORIGIN.trimEnd('/')
+        val url = "$origin/?uri=${Uri.encode(payto)}"
+        findContentWebView()?.loadUrl(url)
+    }
+
+    private fun findContentWebView(): WebView? {
+        val content = window.decorView.findViewById<android.view.ViewGroup>(android.R.id.content)
+            ?: return null
+        return if (content.childCount > 0) content.getChildAt(0) as? WebView else null
     }
 
     private companion object {

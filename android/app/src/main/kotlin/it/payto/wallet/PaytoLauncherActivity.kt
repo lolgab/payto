@@ -7,8 +7,8 @@ import com.google.androidbrowserhelper.trusted.TwaLauncher
 import com.google.androidbrowserhelper.trusted.WebViewFallbackActivity
 
 /**
- * TWA launcher: payto:// (QR, NFC, link) → https://…/?uri=… via getProtocolHandlers(),
- * come definito anche in manifest.webmanifest protocol_handlers.
+ * Launcher wallet: WebView fullscreen così [PaytoWebViewFallbackActivity] può
+ * intercettare NFC in foreground (NDEF_DISCOVERED → payto://).
  */
 class PaytoLauncherActivity : LauncherActivity() {
 
@@ -19,17 +19,26 @@ class PaytoLauncherActivity : LauncherActivity() {
 
     override fun getFallbackStrategy(): TwaLauncher.FallbackStrategy {
         return TwaLauncher.FallbackStrategy { context, twaBuilder, _, completionCallback ->
-            val metadata = LauncherActivityMetadata.parse(context)
-            val intent = WebViewFallbackActivity.createLaunchIntent(
-                context,
-                twaBuilder.uri,
-                metadata,
-            )
-            intent.setClass(context, PaytoWebViewFallbackActivity::class.java)
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            context.startActivity(intent)
+            launchWalletWebView(context, twaBuilder.uri)
             completionCallback?.run()
         }
+    }
+
+    override fun launchTwa() {
+        if (isFinishing) return
+        launchWalletWebView(this, getLaunchingUrl())
+        finish()
+    }
+
+    private fun launchWalletWebView(
+        context: android.content.Context,
+        url: android.net.Uri,
+    ) {
+        val metadata = LauncherActivityMetadata.parse(context)
+        val intent = WebViewFallbackActivity.createLaunchIntent(context, url, metadata)
+        intent.setClass(context, PaytoWebViewFallbackActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        context.startActivity(intent)
     }
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {

@@ -38,8 +38,7 @@ android {
             isDebuggable = true
             manifestPlaceholders["usesCleartext"] = "true"
 
-            val devServer = (project.findProperty("payto.serverUrl") as String?)
-                ?: "http://10.0.2.2:8080"
+            val devServer = rootProject.extra["paytoServerUrl"] as String
             val host = URI(devServer).host ?: "10.0.2.2"
             val site = devServer.trimEnd('/') + "/seller"
 
