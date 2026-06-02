@@ -152,7 +152,7 @@ function showPayment(p) {
   setOptionalRow('row-message', p.message);
 
   const errors = [];
-  if (p.authority !== 'iban') errors.push('In questa demo sono supportati solo pagamenti IBAN');
+  if (p.authority !== 'iban') errors.push('Sono supportati solo pagamenti IBAN');
   if (!p.iban) errors.push('IBAN mancante');
   if (!p.amount || p.amount.value <= 0) errors.push('Importo mancante o non valido');
   if (me && p.iban === me.iban) errors.push('Non puoi pagare te stesso');
@@ -279,9 +279,6 @@ function onAppClick(e) {
   const btn = e.target.closest('button');
   if (!btn) return;
   switch (btn.id) {
-    case 'btn-demo':
-      handleUri('payto://iban/DE75512108001245126199?amount=EUR:42.50&message=Caff%C3%A8&receiver-name=Negozio+Demo');
-      break;
     case 'btn-pay':
       e.preventDefault();
       doPay();

@@ -85,9 +85,9 @@ object Main extends IOApp.Simple:
       """.command) >>
       db.option(selectByIban, sellerIban).flatMap {
         case Some(_) =>
-          db.execute(sql"update accounts set name = $text where iban = $text".command, ("Negozio Demo", sellerIban))
+          db.execute(sql"update accounts set name = $text where iban = $text".command, ("Esercente", sellerIban))
         case None =>
-          db.execute(insertAccount, ("Negozio Demo", "DE75512108001245126199", 0.0, "EUR"))
+          db.execute(insertAccount, ("Esercente", "DE75512108001245126199", 0.0, "EUR"))
       }
 
   private def startServer(db: Db): IO[Unit] =
