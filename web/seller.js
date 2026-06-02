@@ -6,6 +6,7 @@ let pendingUri = null;
 let pollTimer = null;
 let expectedAmount = 0;
 let baselineId = 0;
+let nativeNfcActive = false;
 
 function fmtCents(c) {
   return (c / 100).toLocaleString('it-IT', {
@@ -21,6 +22,8 @@ function fmtIban(iban) {
 }
 
 function show(name) {
+  // Safety net: NFC must be active only on the QR/NFC screen.
+  if (name !== 'screen-nfc') stopNativeNfc();
   for (const id of ['screen-input', 'screen-nfc', 'screen-done']) {
     $(id).hidden = id !== name;
   }
@@ -114,10 +117,13 @@ function invokeSellerApp(path) {
 }
 
 function startNativeNfc(uri) {
+  nativeNfcActive = true;
   invokeSellerApp('nfc?uri=' + encodeURIComponent(uri));
 }
 
 function stopNativeNfc() {
+  if (!nativeNfcActive) return;
+  nativeNfcActive = false;
   invokeSellerApp('nfc-stop');
 }
 

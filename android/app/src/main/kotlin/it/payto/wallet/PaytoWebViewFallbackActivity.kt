@@ -56,10 +56,15 @@ class PaytoWebViewFallbackActivity : WebViewFallbackActivity() {
                 runOnUiThread { openPaytoInWebView(payto) }
             },
             NfcAdapter.FLAG_READER_NFC_A or
-                NfcAdapter.FLAG_READER_NFC_B or
-                NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK,
+                NfcAdapter.FLAG_READER_NFC_B,
             null,
         )
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        PaytoNfc.extractPaytoUri(intent)?.let(::openPaytoInWebView)
     }
 
     override fun onPause() {
