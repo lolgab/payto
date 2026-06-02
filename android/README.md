@@ -7,9 +7,9 @@ Due app Android separate (stesso progetto Gradle):
 | `app` | `it.payto.wallet` | PayTo | `/` — pagamenti cliente |
 | `seller-app` | `it.payto.seller` | PayTo Cassa | `/seller` — cassa esercente |
 
-Entrambe aprono la PWA a **schermo intero** via Chrome Trusted Web Activity. Il wallet ha handler nativo per `payto://`; la cassa apre solo `/seller`.
+Entrambe aprono la PWA a **schermo intero** via Chrome Trusted Web Activity. Il wallet ha handler nativo minimale per `payto://`; la cassa apre solo `/seller`.
 
-Il QR e il tag NFC contengono lo stesso `payto://iban/…` — Android apre il wallet come per un deep link (intent filter + protocol handler).
+Il QR e il tag NFC contengono lo stesso `payto://iban/…` — Android apre il wallet come per un deep link (intent filter + protocol handler). La logica NFC attiva (HCE/emulazione) resta lato cassa.
 
 ## Architettura (wallet)
 
