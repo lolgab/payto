@@ -7,8 +7,8 @@ import com.google.androidbrowserhelper.trusted.TwaLauncher
 import com.google.androidbrowserhelper.trusted.WebViewFallbackActivity
 
 /**
- * Launcher wallet: WebView fullscreen così [PaytoWebViewFallbackActivity] può
- * intercettare NFC in foreground (NDEF_DISCOVERED → payto://).
+ * Launcher wallet: supporta solo payto:// come deep link in ingresso
+ * (incluso quando Android risolve un NDEF_DISCOVERED con schema payto).
  */
 class PaytoLauncherActivity : LauncherActivity() {
 
