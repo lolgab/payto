@@ -36,16 +36,23 @@ object Main extends IOApp.Simple:
     sql"select id, name, iban, balance, currency from accounts where iban = $text"
       .query(integer *: text *: text *: real *: text *: nil)
 
+  private val selectByName =
+    sql"select id, name, iban, balance, currency from accounts where name = $text order by id asc limit 1"
+      .query(integer *: text *: text *: real *: text *: nil)
+
   private val insertAccount =
     sql"insert into accounts (name, iban, balance, currency) values ($text, $text, $real, $text)".command
 
   private val updateBalance =
     sql"update accounts set balance = $real where id = $integer".command
 
+  private val updateIban =
+    sql"update accounts set iban = $text where id = $integer".command
+
   private val insertTransfer =
     sql"insert into transfers (from_iban, to_iban, amount, message) values ($text, $text, $real, $text)".command
 
-  private val sellerIban = "DE75512108001245126199"
+  private val defaultSellerIban = "IT60X0542811101000000123456"
 
   private val maxTransferIdToSeller =
     sql"select coalesce(max(id), 0) from transfers where to_iban = $text".query(integer)
@@ -83,25 +90,38 @@ object Main extends IOApp.Simple:
           created_at text not null default (datetime('now'))
         )
       """.command) >>
-      db.option(selectByIban, sellerIban).flatMap {
-        case Some(_) =>
-          db.execute(sql"update accounts set name = $text where iban = $text".command, ("Esercente", sellerIban))
+      db.option(selectByName, "Esercente").flatMap {
+        case Some((id, _, iban, _, _)) if !iban.startsWith("IT") =>
+          db.option(selectByIban, defaultSellerIban).flatMap {
+            case Some((otherId, _, _, _, _)) if otherId != id => IO.unit
+            case _ => db.execute(updateIban, (defaultSellerIban, id))
+          }
+        case Some(_) => IO.unit
         case None =>
-          db.execute(insertAccount, ("Esercente", "DE75512108001245126199", 0.0, "EUR"))
+          db.option(selectByIban, defaultSellerIban).flatMap {
+            case Some(_) =>
+              db.execute(sql"update accounts set name = $text where iban = $text".command, ("Esercente", defaultSellerIban))
+            case None =>
+              db.execute(insertAccount, ("Esercente", defaultSellerIban, 0.0, "EUR"))
+          }
       }
 
   private def startServer(db: Db): IO[Unit] =
     val api = HttpRoutes.of[IO] {
       case GET -> Root / "api" / "seller" =>
-        loadByIban(db, sellerIban).flatMap {
+        loadSellerAccount(db).flatMap {
           case Some(acc) => jsonOk(accJson(acc))
           case None      => NotFound(jsonErr("Conto venditore non trovato"))
         }
 
       case GET -> Root / "api" / "seller" / "baseline" =>
-        db.execute(maxTransferIdToSeller, sellerIban).flatMap {
-          case id :: Nil => Ok(s"""{"lastId":$id}""")
-          case _         => InternalServerError(jsonErr("Impossibile leggere lo stato dei pagamenti"))
+        loadSellerAccount(db).flatMap {
+          case None => NotFound(jsonErr("Conto venditore non trovato"))
+          case Some(seller) =>
+            db.execute(maxTransferIdToSeller, seller.iban).flatMap {
+              case id :: Nil => Ok(s"""{"lastId":$id}""")
+              case _         => InternalServerError(jsonErr("Impossibile leggere lo stato dei pagamenti"))
+            }
         }
 
       case req @ GET -> Root / "api" / "seller" / "payment" =>
@@ -109,6 +129,12 @@ object Main extends IOApp.Simple:
 
       case req @ GET -> Root / "api" / "me" =>
         me(db, req)
+
+      case req @ POST -> Root / "api" / "me" / "iban" =>
+        updateMyIban(db, req)
+
+      case req @ POST -> Root / "api" / "seller" / "iban" =>
+        updateSellerIban(db, req)
 
       case req @ GET -> Root / "api" / "account" =>
         req.params.get("iban") match
@@ -158,7 +184,7 @@ object Main extends IOApp.Simple:
 
   private def createAccount(db: Db): IO[Response[IO]] =
     val name = s"Utente ${Random.between(1000, 9999)}"
-    val iban = Iban.generate()
+    val iban = Iban.generateItalian()
     db.execute(insertAccount, (name, iban, 4250.0, "EUR")) >>
       db.execute(sql"select last_insert_rowid()".query(integer)).flatMap {
         case id :: Nil =>
@@ -181,11 +207,52 @@ object Main extends IOApp.Simple:
     req.params.get("amount").flatMap(_.toDoubleOption) match
       case None => BadRequest(jsonErr("Parametro importo mancante"))
       case Some(amt) =>
-        db.option(findPaymentAfter, (sellerIban, after, amt)).flatMap {
-          case Some((id, from, paid, name)) =>
-            Ok(s"""{"paid":true,"id":$id,"fromIban":"$from","fromName":"${esc(name)}","amount":$paid}""")
-          case None => Ok("""{"paid":false}""")
+        loadSellerAccount(db).flatMap {
+          case None => NotFound(jsonErr("Conto venditore non trovato"))
+          case Some(seller) =>
+            db.option(findPaymentAfter, (seller.iban, after, amt)).flatMap {
+              case Some((id, from, paid, name)) =>
+                Ok(s"""{"paid":true,"id":$id,"fromIban":"$from","fromName":"${esc(name)}","amount":$paid}""")
+              case None => Ok("""{"paid":false}""")
+            }
         }
+
+  private def updateMyIban(db: Db, req: Request[IO]): IO[Response[IO]] =
+    req.cookies.find(_.name == "account_id").flatMap(_.content.toLongOption) match
+      case None => BadRequest(jsonErr("Nessun conto — ricarica la pagina"))
+      case Some(id) =>
+        req.as[String].flatMap { body =>
+          jsonStr(body, "iban").map(normalizeIban) match
+            case None => BadRequest(jsonErr("Parametro IBAN mancante"))
+            case Some(iban) =>
+              if !Iban.isValidItalian(iban) then BadRequest(jsonErr("IBAN italiano non valido"))
+              else updateIbanForAccount(db, id, iban)
+        }
+
+  private def updateSellerIban(db: Db, req: Request[IO]): IO[Response[IO]] =
+    req.as[String].flatMap { body =>
+      jsonStr(body, "iban").map(normalizeIban) match
+        case None => BadRequest(jsonErr("Parametro IBAN mancante"))
+        case Some(iban) =>
+          if !Iban.isValidItalian(iban) then BadRequest(jsonErr("IBAN italiano non valido"))
+          else
+            loadSellerAccount(db).flatMap {
+              case None => NotFound(jsonErr("Conto venditore non trovato"))
+              case Some(seller) => updateIbanForAccount(db, seller.id, iban)
+            }
+    }
+
+  private def updateIbanForAccount(db: Db, accountId: Long, iban: String): IO[Response[IO]] =
+    db.option(selectByIban, iban).flatMap {
+      case Some((otherId, _, _, _, _)) if otherId != accountId =>
+        BadRequest(jsonErr("IBAN gia in uso da un altro conto"))
+      case _ =>
+        db.execute(updateIban, (iban, accountId)) >>
+          loadAccount(db, accountId).flatMap {
+            case Some(acc) => jsonOk(accJson(acc))
+            case None      => InternalServerError(jsonErr("Impossibile aggiornare l'IBAN"))
+          }
+    }
 
   private def pay(db: Db, req: Request[IO]): IO[Response[IO]] =
     val fromId = req.cookies.find(_.name == "account_id").flatMap(_.content.toLongOption)
@@ -224,6 +291,9 @@ object Main extends IOApp.Simple:
   private def loadByIban(db: Db, iban: String): IO[Option[Account]] =
     db.option(selectByIban, iban).map(_.map(toAccount))
 
+  private def loadSellerAccount(db: Db): IO[Option[Account]] =
+    db.option(selectByName, "Esercente").map(_.map(toAccount))
+
   private def toAccount(t: (Long, String, String, Double, String)): Account =
     val (id, name, iban, balance, currency) = t
     Account(id, name, iban, balance, currency)
@@ -258,13 +328,26 @@ object Main extends IOApp.Simple:
   private def jsonNum(body: String, key: String): Option[Double] =
     s""""$key"\\s*:\\s*([0-9.]+)""".r.findFirstMatchIn(body).map(_.group(1).toDouble)
 
+  private def normalizeIban(s: String): String =
+    s.replace(" ", "").toUpperCase
+
 object Iban:
   private val rng = Random
 
-  def generate(country: String = "IT"): String =
-    val cc = country.toUpperCase
-    val bban = (1 to 18).map(_ => rng.nextInt(10)).mkString
-    s"$cc${checkDigits(cc, bban)}$bban"
+  private val letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  private val alnum = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+  def generateItalian(): String =
+    val cin = letters(rng.nextInt(letters.length))
+    val abi = f"${rng.nextInt(100000)}%05d"
+    val cab = f"${rng.nextInt(100000)}%05d"
+    val account = f"${rng.nextLong(1000000000000L)}%012d"
+    val bban = s"$cin$abi$cab$account"
+    s"IT${checkDigits("IT", bban)}$bban"
+
+  def isValidItalian(raw: String): Boolean =
+    val iban = raw.replace(" ", "").toUpperCase
+    iban.matches("^IT[0-9]{2}[A-Z][0-9]{10}[A-Z0-9]{12}$")
 
   private def checkDigits(country: String, bban: String): String =
     val s = bban + country.map(c => (c.toInt - 55).toString).mkString + "00"
@@ -272,6 +355,9 @@ object Iban:
 
   private def mod97(s: String): Int =
     s.foldLeft("") { (acc, ch) =>
-      val next = acc + ch
+      val value =
+        if ch.isLetter then (ch.toInt - 55).toString
+        else ch.toString
+      val next = acc + value
       if next.length > 7 then (next.toLong % 97).toString else next
     }.toInt % 97

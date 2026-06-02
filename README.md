@@ -18,6 +18,13 @@ Un pagamento verso conto corrente in euro si esprime così:
 payto://iban/IT60X0542811101000000123456?amount=EUR:12.50&receiver-name=Caff%C3%A8+Roma&message=Ordine+42
 ```
 
+Altri esempi con IBAN italiani:
+
+```text
+payto://iban/IT86P0329601600000000003419?amount=EUR:3.20&receiver-name=Panificio+Milano&message=Cornetti
+payto://iban/IT35Q0542811101000000123488?amount=EUR:48.00&receiver-name=Farmacia+Duomo&message=Scontrino+A17
+```
+
 | Parte | Significato |
 |--------|-------------|
 | `iban` | *Authority* RFC 8905: destinazione tramite IBAN (eventualmente `BIC/IBAN` nel path) |
@@ -60,6 +67,16 @@ L’app che gestisce il link **non deve inventare** i dati del bonifico: li legg
 | [`web/bonifico.html`](web/bonifico.html) | Generatore QR **EPC** (SEPA Instant) per banche che supportano già lo standard EPC069-12 — complementare a `payto://` |
 
 Deploy demo: [https://payto.fly.dev](https://payto.fly.dev)
+
+## Screenshot app
+
+### Wallet (cliente)
+
+![Wallet PayTo](docs/screenshots/wallet-app.svg)
+
+### Cassa (esercente)
+
+![Cassa PayTo](docs/screenshots/seller-app.svg)
 
 ## Come una banca può supportare `payto://` (facile)
 

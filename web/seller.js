@@ -21,6 +21,23 @@ function fmtIban(iban) {
   return iban.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim();
 }
 
+function normalizeIban(iban) {
+  return (iban || '').replace(/\s/g, '').toUpperCase();
+}
+
+function setSellerIbanStatus(msg, isError = false) {
+  const el = $('seller-iban-status');
+  if (!el) return;
+  el.textContent = msg || '';
+  el.style.color = isError ? '#dc2626' : '#64748b';
+}
+
+function refreshSellerAccount() {
+  if (!seller) return;
+  $('shop-name').textContent = seller.name;
+  $('seller-iban').textContent = fmtIban(seller.iban);
+}
+
 function show(name) {
   // Safety net: NFC must be active only on the QR/NFC screen.
   if (name !== 'screen-nfc') stopNativeNfc();
@@ -169,7 +186,36 @@ async function loadSeller() {
   const res = await fetch('/api/seller');
   if (!res.ok) throw new Error('Impossibile caricare il conto venditore');
   seller = await res.json();
-  $('shop-name').textContent = seller.name;
+  refreshSellerAccount();
+}
+
+async function editSellerIban() {
+  if (!seller) return;
+  const input = prompt('Inserisci un IBAN italiano per la cassa:', seller.iban || '');
+  if (input == null) return;
+  const iban = normalizeIban(input);
+  if (!iban) {
+    setSellerIbanStatus('Nessun IBAN inserito', true);
+    return;
+  }
+  setSellerIbanStatus('Aggiornamento in corso…');
+  try {
+    const res = await fetch('/api/seller/iban', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ iban }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setSellerIbanStatus(data.error || 'Impossibile aggiornare l\'IBAN', true);
+      return;
+    }
+    seller = data;
+    refreshSellerAccount();
+    setSellerIbanStatus('IBAN aggiornato');
+  } catch (e) {
+    setSellerIbanStatus(e.message || 'Errore di rete', true);
+  }
 }
 
 document.querySelectorAll('.key').forEach((btn) => {
@@ -184,12 +230,16 @@ document.querySelectorAll('.key').forEach((btn) => {
 $('btn-enter').onclick = () => startNfc();
 $('btn-cancel').onclick = () => cancelNfc();
 $('screen-done').onclick = () => newSale();
+$('btn-edit-seller-iban').onclick = () => editSellerIban();
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/seller/sw.js');
 
 loadSeller()
   .then(() => refreshDisplay())
-  .catch((e) => { $('shop-name').textContent = e.message; });
+  .catch((e) => {
+    $('shop-name').textContent = e.message;
+    setSellerIbanStatus(e.message, true);
+  });
 
 document.addEventListener('keydown', (e) => {
   if ($('screen-input').hidden) return;

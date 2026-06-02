@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="860" viewBox="0 0 420 860">
+  <rect width="420" height="860" fill="#eef2f7"/>
+  <rect x="32" y="28" width="356" height="804" rx="32" fill="#ffffff" stroke="#dbe3ec"/>
+  <rect x="32" y="28" width="356" height="120" rx="32" fill="#0d3b66"/>
+  <text x="58" y="86" fill="#ffffff" font-family="Arial, sans-serif" font-size="24" font-weight="700">PayTo Pagamenti</text>
+  <rect x="58" y="124" width="304" height="132" rx="18" fill="#ffffff" stroke="#dbe3ec"/>
+  <text x="78" y="162" fill="#64748b" font-family="Arial, sans-serif" font-size="14">Saldo disponibile</text>
+  <text x="78" y="206" fill="#0d3b66" font-family="Arial, sans-serif" font-size="38" font-weight="700">¬ 4.250,00</text>
+  <text x="78" y="235" fill="#1a202c" font-family="Arial, sans-serif" font-size="13" font-weight="600">IT60 X054 2811 1010 0000 0123 456</text>
+  <rect x="58" y="286" width="304" height="438" rx="20" fill="#ffffff" stroke="#dbe3ec"/>
+  <text x="86" y="330" fill="#1a202c" font-family="Arial, sans-serif" font-size="22" font-weight="700">Vuoi effettuare questo pagamento?</text>
+  <rect x="82" y="360" width="256" height="92" rx="14" fill="#f0f7ff" stroke="#bfdbfe"/>
+  <text x="98" y="390" fill="#64748b" font-family="Arial, sans-serif" font-size="12">Da</text>
+  <text x="98" y="414" fill="#0d3b66" font-family="Arial, sans-serif" font-size="17" font-weight="700">Il tuo conto</text>
+  <text x="98" y="437" fill="#1a202c" font-family="Arial, sans-serif" font-size="13">IT60 X054 2811 1010 0000 0123 456</text>
+  <rect x="82" y="468" width="256" height="92" rx="14" fill="#f0fdf4" stroke="#bbf7d0"/>
+  <text x="98" y="498" fill="#64748b" font-family="Arial, sans-serif" font-size="12">A</text>
+  <text x="98" y="522" fill="#0d3b66" font-family="Arial, sans-serif" font-size="17" font-weight="700">Caffè Roma</text>
+  <text x="98" y="545" fill="#1a202c" font-family="Arial, sans-serif" font-size="13">IT86 P032 9601 6000 0000 0034 19</text>
+  <text x="160" y="618" fill="#0d3b66" font-family="Arial, sans-serif" font-size="52" font-weight="700">¬12,50</text>
+  <rect x="82" y="656" width="256" height="54" rx="14" fill="#0066cc"/>
+  <text x="124" y="689" fill="#ffffff" font-family="Arial, sans-serif" font-size="19" font-weight="700">Conferma pagamento</text>
+</svg>

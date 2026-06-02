@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="860" viewBox="0 0 420 860">
+  <rect width="420" height="860" fill="#eef2f7"/>
+  <rect x="32" y="28" width="356" height="804" rx="32" fill="#ffffff" stroke="#dbe3ec"/>
+  <rect x="32" y="28" width="356" height="98" rx="32" fill="#0d3b66"/>
+  <text x="58" y="84" fill="#ffffff" font-family="Arial, sans-serif" font-size="24" font-weight="700">PayTo Cassa</text>
+  <text x="272" y="84" fill="#dbeafe" font-family="Arial, sans-serif" font-size="14">Esercente</text>
+  <rect x="58" y="144" width="304" height="92" rx="14" fill="#ffffff" stroke="#dbe3ec"/>
+  <text x="76" y="172" fill="#64748b" font-family="Arial, sans-serif" font-size="12">IBAN incasso</text>
+  <text x="76" y="199" fill="#1a202c" font-family="Arial, sans-serif" font-size="13" font-weight="600">IT86 P032 9601 6000 0000 0034 19</text>
+  <text x="76" y="222" fill="#0066cc" font-family="Arial, sans-serif" font-size="12" font-weight="700">Cambia IBAN</text>
+  <text x="58" y="270" fill="#64748b" font-family="Arial, sans-serif" font-size="13" font-weight="700">IMPORTO DA INCASSARE</text>
+  <rect x="58" y="286" width="304" height="100" rx="14" fill="#ffffff" stroke="#dbe3ec"/>
+  <text x="214" y="350" fill="#0d3b66" font-family="Arial, sans-serif" font-size="54" font-weight="700" text-anchor="middle">¬ 12,50</text>
+  <g fill="#ffffff" stroke="#dbe3ec">
+    <rect x="58" y="408" width="94" height="72" rx="10"/>
+    <rect x="163" y="408" width="94" height="72" rx="10"/>
+    <rect x="268" y="408" width="94" height="72" rx="10"/>
+    <rect x="58" y="492" width="94" height="72" rx="10"/>
+    <rect x="163" y="492" width="94" height="72" rx="10"/>
+    <rect x="268" y="492" width="94" height="72" rx="10"/>
+    <rect x="58" y="576" width="94" height="72" rx="10"/>
+    <rect x="163" y="576" width="94" height="72" rx="10"/>
+    <rect x="268" y="576" width="94" height="72" rx="10"/>
+  </g>
+  <g fill="#1a202c" font-family="Arial, sans-serif" font-size="30" font-weight="700" text-anchor="middle">
+    <text x="105" y="453">7</text><text x="210" y="453">8</text><text x="315" y="453">9</text>
+    <text x="105" y="537">4</text><text x="210" y="537">5</text><text x="315" y="537">6</text>
+    <text x="105" y="621">1</text><text x="210" y="621">2</text><text x="315" y="621">3</text>
+  </g>
+  <rect x="58" y="678" width="304" height="64" rx="14" fill="#0066cc"/>
+  <text x="210" y="718" fill="#ffffff" font-family="Arial, sans-serif" font-size="22" font-weight="700" text-anchor="middle">Continua</text>
+</svg>

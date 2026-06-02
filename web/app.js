@@ -80,6 +80,10 @@ function show(name) {
   document.querySelector('.app').classList.toggle('is-paying', name === 'payment');
 }
 
+function normalizeIban(iban) {
+  return (iban || '').replace(/\s/g, '').toUpperCase();
+}
+
 function fmtIban(iban) {
   return iban ? iban.replace(/(.{4})/g, '$1 ').trim() : '—';
 }
@@ -114,8 +118,50 @@ async function loadMe() {
   const res = await apiFetch('/api/me');
   if (!res.ok) throw new Error('Impossibile caricare il conto');
   me = await res.json();
+  refreshMeCard();
+}
+
+function refreshMeCard() {
+  if (!me) return;
   $('balance').textContent = fmtMoney(me.balance, me.currency);
   $('my-iban').textContent = fmtIban(me.iban);
+}
+
+function setIbanStatus(msg, isError = false) {
+  const el = $('iban-status');
+  if (!el) return;
+  el.textContent = msg || '';
+  el.style.color = isError ? '#dc2626' : '#64748b';
+}
+
+async function editMyIban() {
+  if (!me) return;
+  const input = prompt('Inserisci un IBAN italiano (es. IT60X0542811101000000123456):', me.iban || '');
+  if (input == null) return;
+  const iban = normalizeIban(input);
+  if (!iban) {
+    setIbanStatus('Nessun IBAN inserito', true);
+    return;
+  }
+  setIbanStatus('Aggiornamento in corso…');
+  try {
+    const res = await apiFetch('/api/me/iban', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ iban }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setIbanStatus(data.error || 'Impossibile aggiornare l\'IBAN', true);
+      return;
+    }
+    me = data;
+    refreshMeCard();
+    if (!window._payment) $('home-status').textContent = '';
+    setIbanStatus('IBAN aggiornato');
+  } catch (e) {
+    setIbanStatus(e.message || 'Errore di rete', true);
+  }
 }
 
 async function lookupRecipient(iban) {
@@ -279,6 +325,10 @@ function onAppClick(e) {
   const btn = e.target.closest('button');
   if (!btn) return;
   switch (btn.id) {
+    case 'btn-edit-iban':
+      e.preventDefault();
+      editMyIban();
+      break;
     case 'btn-pay':
       e.preventDefault();
       doPay();
