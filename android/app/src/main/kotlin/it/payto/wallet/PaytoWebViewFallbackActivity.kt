@@ -10,6 +10,8 @@ import com.google.androidbrowserhelper.trusted.WebViewFallbackActivity
  */
 class PaytoWebViewFallbackActivity : WebViewFallbackActivity() {
 
+    private var nfcForeground: PaytoNfc.ForegroundDispatch? = null
+
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         val httpLaunchUrl = intent.getParcelableExtra<Uri>(LAUNCH_URL_EXTRA)
         if (httpLaunchUrl?.scheme == "http") {
@@ -22,11 +24,26 @@ class PaytoWebViewFallbackActivity : WebViewFallbackActivity() {
         if (httpLaunchUrl?.scheme == "http") {
             findContentWebView()?.loadUrl(httpLaunchUrl.toString())
         }
+        nfcForeground = PaytoNfc.createForegroundDispatch(this)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        nfcForeground?.enable()
+    }
+
+    override fun onPause() {
+        nfcForeground?.disable()
+        super.onPause()
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        deliverPaytoUri(intent)
+    }
+
+    private fun deliverPaytoUri(intent: Intent) {
         PaytoNfc.extractPaytoUri(intent)?.let(::openPaytoInWebView)
     }
 

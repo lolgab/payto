@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">PayTo Cassa</string>
+    <string name="nfc_type4_tag_emulation_service_name">PayTo Cassa</string>
+    <string name="nfc_type4_tag_emulation_description">PayTo Cassa</string>
     <string name="fileProviderAuthority">it.payto.seller.fileprovider</string>
     <string name="launchUrl">https://payto.fly.dev/seller</string>
     <string name="hostName">payto.fly.dev</string>
