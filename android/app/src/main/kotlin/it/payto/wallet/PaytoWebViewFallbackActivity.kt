@@ -10,7 +10,9 @@ import com.google.androidbrowserhelper.trusted.WebViewFallbackActivity
  */
 class PaytoWebViewFallbackActivity : WebViewFallbackActivity() {
 
-    private var nfcForeground: PaytoNfc.ForegroundDispatch? = null
+    private var nfcReader: PaytoNfc.ReaderMode? = null
+    private var lastPaytoUri: String? = null
+    private var lastPaytoAtMs: Long = 0
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         val httpLaunchUrl = intent.getParcelableExtra<Uri>(LAUNCH_URL_EXTRA)
@@ -24,27 +26,31 @@ class PaytoWebViewFallbackActivity : WebViewFallbackActivity() {
         if (httpLaunchUrl?.scheme == "http") {
             findContentWebView()?.loadUrl(httpLaunchUrl.toString())
         }
-        nfcForeground = PaytoNfc.createForegroundDispatch(this)
+        nfcReader = PaytoNfc.createReaderMode(this, ::deliverPaytoUri)
     }
 
     override fun onResume() {
         super.onResume()
-        nfcForeground?.enable()
+        nfcReader?.enable()
     }
 
     override fun onPause() {
-        nfcForeground?.disable()
+        nfcReader?.disable()
         super.onPause()
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        deliverPaytoUri(intent)
+        PaytoNfc.extractPaytoUri(intent)?.let(::deliverPaytoUri)
     }
 
-    private fun deliverPaytoUri(intent: Intent) {
-        PaytoNfc.extractPaytoUri(intent)?.let(::openPaytoInWebView)
+    private fun deliverPaytoUri(payto: String) {
+        val now = System.currentTimeMillis()
+        if (payto == lastPaytoUri && now - lastPaytoAtMs < 2_000) return
+        lastPaytoUri = payto
+        lastPaytoAtMs = now
+        openPaytoInWebView(payto)
     }
 
     private fun openPaytoInWebView(payto: String) {
