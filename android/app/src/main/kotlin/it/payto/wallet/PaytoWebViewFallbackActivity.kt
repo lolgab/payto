@@ -42,7 +42,21 @@ class PaytoWebViewFallbackActivity : WebViewFallbackActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        deliverIncomingIntent(intent)
+    }
+
+    private fun deliverIncomingIntent(intent: Intent) {
         PaytoNfc.extractPaytoUri(intent)?.let(::deliverPaytoUri)
+        intent.getParcelableExtra<Uri>(LAUNCH_URL_EXTRA)?.let(::deliverLaunchUrl)
+    }
+
+    private fun deliverLaunchUrl(launchUrl: Uri) {
+        val uriParam = launchUrl.getQueryParameter("uri")
+        if (uriParam != null) {
+            deliverPaytoUri(uriParam)
+            return
+        }
+        findContentWebView()?.loadUrl(launchUrl.toString())
     }
 
     private fun deliverPaytoUri(payto: String) {

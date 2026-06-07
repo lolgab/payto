@@ -50,5 +50,6 @@ class PaytoLauncherActivity : LauncherActivity() {
         PaytoNfc.applyPaytoIntent(intent)
         setIntent(intent)
         super.onNewIntent(intent)
+        launchTwa()
     }
 }
