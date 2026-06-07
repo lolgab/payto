@@ -35,9 +35,9 @@ class PaytoSellerWebViewFallbackActivity : WebViewFallbackActivity() {
         attachSellerBridge()
     }
 
-    override fun onStop() {
+    override fun onDestroy() {
         SellerNfcBridge.stop(this)
-        super.onStop()
+        super.onDestroy()
     }
 
     private fun applySafeAreaInsets() {

@@ -13,7 +13,7 @@ import com.google.androidbrowserhelper.trusted.WebViewFallbackActivity
  */
 class PaytoWebViewFallbackActivity : WebViewFallbackActivity() {
 
-    private var nfcReader: PaytoNfc.ReaderMode? = null
+    private var nfcForeground: PaytoNfc.ForegroundDispatch? = null
     private var lastPaytoUri: String? = null
     private var lastPaytoAtMs: Long = 0
 
@@ -30,16 +30,17 @@ class PaytoWebViewFallbackActivity : WebViewFallbackActivity() {
         if (httpLaunchUrl?.scheme == "http") {
             findContentWebView()?.loadUrl(httpLaunchUrl.toString())
         }
-        nfcReader = PaytoNfc.createReaderMode(this, ::deliverPaytoUri)
+        nfcForeground = PaytoNfc.createForegroundDispatch(this)
+        deliverIncomingIntent(intent)
     }
 
     override fun onResume() {
         super.onResume()
-        nfcReader?.enable()
+        nfcForeground?.enable()
     }
 
     override fun onPause() {
-        nfcReader?.disable()
+        nfcForeground?.disable()
         super.onPause()
     }
 
