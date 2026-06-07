@@ -3,6 +3,9 @@ package it.payto.wallet
 import android.content.Intent
 import android.net.Uri
 import android.webkit.WebView
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import com.google.androidbrowserhelper.trusted.WebViewFallbackActivity
 
 /**
@@ -23,6 +26,7 @@ class PaytoWebViewFallbackActivity : WebViewFallbackActivity() {
             )
         }
         super.onCreate(savedInstanceState)
+        applySafeAreaInsets()
         if (httpLaunchUrl?.scheme == "http") {
             findContentWebView()?.loadUrl(httpLaunchUrl.toString())
         }
@@ -71,6 +75,17 @@ class PaytoWebViewFallbackActivity : WebViewFallbackActivity() {
         val origin = BuildConfig.WEB_ORIGIN.trimEnd('/')
         val url = "$origin/?uri=${Uri.encode(payto)}"
         findContentWebView()?.loadUrl(url)
+    }
+
+    private fun applySafeAreaInsets() {
+        val webView = findContentWebView() ?: return
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        ViewCompat.setOnApplyWindowInsetsListener(webView) { view, windowInsets ->
+            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            view.setPadding(insets.left, insets.top, insets.right, insets.bottom)
+            windowInsets
+        }
+        ViewCompat.requestApplyInsets(webView)
     }
 
     private fun findContentWebView(): WebView? {
