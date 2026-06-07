@@ -63,7 +63,6 @@ let me = null;
 let appReady = false;
 let paying = false;
 let paymentErrors = [];
-const pendingLaunches = [];
 
 async function apiFetch(url, opts = {}) {
   const ctrl = new AbortController();
@@ -342,33 +341,32 @@ function onAppClick(e) {
 
 function flushLaunches() {
   tryLaunch(location.href);
-  for (const url of pendingLaunches) tryLaunch(url);
-  pendingLaunches.length = 0;
 }
 
 async function boot() {
   if ('launchQueue' in window) {
     launchQueue.setConsumer((p) => {
-      if (!p.targetURL) return;
-      if (appReady) tryLaunch(p.targetURL);
-      else pendingLaunches.push(p.targetURL);
+      if (p.targetURL) tryLaunch(p.targetURL);
     });
   }
+
+  flushLaunches();
 
   try {
     await loadMe();
   } catch (e) {
-    $('home-status').textContent =
-      e.name === 'AbortError'
-        ? 'Server non raggiungibile — riprova tra poco'
-        : (e.message || 'Impossibile caricare il conto');
-    show('home');
-    return;
+    if (!window._payment) {
+      $('home-status').textContent =
+        e.name === 'AbortError'
+          ? 'Server non raggiungibile — riprova tra poco'
+          : (e.message || 'Impossibile caricare il conto');
+      show('home');
+    }
   }
 
   appReady = true;
+  if (window._payment) showPayment(window._payment);
   refreshPayButton();
-  flushLaunches();
 }
 
 // --- boot ---
