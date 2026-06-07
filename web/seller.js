@@ -144,6 +144,12 @@ function stopNativeNfc() {
   invokeSellerApp('nfc-stop');
 }
 
+function syncNativeNfc() {
+  const onNfcScreen = !$('screen-nfc').hidden;
+  if (onNfcScreen && pendingUri) startNativeNfc(pendingUri);
+  else stopNativeNfc();
+}
+
 async function startNfc() {
   expectedAmount = cents / 100;
   pendingUri = buildPaytoUri(expectedAmount);
@@ -248,3 +254,10 @@ document.addEventListener('keydown', (e) => {
   else if (e.key === 'Escape') { clearAmount(); e.preventDefault(); }
   else if (e.key === 'Enter' && cents > 0) { startNfc(); e.preventDefault(); }
 });
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') syncNativeNfc();
+  else stopNativeNfc();
+});
+
+window.addEventListener('pagehide', () => stopNativeNfc());
