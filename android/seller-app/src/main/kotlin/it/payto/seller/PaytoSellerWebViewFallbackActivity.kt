@@ -8,6 +8,9 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.annotation.RequiresApi
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import com.google.androidbrowserhelper.trusted.WebViewFallbackActivity
 
 /** WebView fullscreen con intercept di payto-seller:// per avviare HCE dalla PWA. */
@@ -25,6 +28,7 @@ class PaytoSellerWebViewFallbackActivity : WebViewFallbackActivity() {
             )
         }
         super.onCreate(savedInstanceState)
+        applySafeAreaInsets()
         if (httpLaunchUrl?.scheme == "http") {
             findContentWebView()?.loadUrl(httpLaunchUrl.toString())
         }
@@ -34,6 +38,17 @@ class PaytoSellerWebViewFallbackActivity : WebViewFallbackActivity() {
     override fun onStop() {
         SellerNfcBridge.stop(this)
         super.onStop()
+    }
+
+    private fun applySafeAreaInsets() {
+        val webView = findContentWebView() ?: return
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        ViewCompat.setOnApplyWindowInsetsListener(webView) { view, windowInsets ->
+            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            view.setPadding(insets.left, insets.top, insets.right, insets.bottom)
+            windowInsets
+        }
+        ViewCompat.requestApplyInsets(webView)
     }
 
     private fun attachSellerBridge() {

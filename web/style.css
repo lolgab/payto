@@ -30,7 +30,8 @@ body {
   max-width: 420px;
   margin: 0 auto;
   min-height: 100vh;
-  padding: 0 0 2rem;
+  min-height: 100dvh;
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) calc(2rem + env(safe-area-inset-bottom, 0px)) env(safe-area-inset-left, 0px);
 }
 
 /* --- Header --- */
