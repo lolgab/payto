@@ -9,6 +9,10 @@ import com.luigivampa92.ndefemulation.ndef.UriNdefData
 /** Avvia/ferma emulazione HCE phone-to-phone (persiste via SharedPreferences). */
 object SellerNfcBridge {
 
+    fun stop(context: Context) {
+        NdefEmulation(context.applicationContext).currentEmulatedNdefData = null
+    }
+
     fun handle(context: Context, data: Uri): Boolean {
         if (data.scheme != "payto-seller") return false
         val app = context.applicationContext
