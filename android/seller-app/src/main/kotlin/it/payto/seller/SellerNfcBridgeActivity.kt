@@ -9,6 +9,7 @@ class SellerNfcBridgeActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         SellerNfcBridge.handleIntent(this, intent)
+        SellerNfcBridge.syncPreferredService(this)
         finish()
     }
 }

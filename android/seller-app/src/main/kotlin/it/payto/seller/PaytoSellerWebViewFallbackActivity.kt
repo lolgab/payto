@@ -17,8 +17,6 @@ import com.google.androidbrowserhelper.trusted.WebViewFallbackActivity
 class PaytoSellerWebViewFallbackActivity : WebViewFallbackActivity() {
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
-        // Nessuna sessione NFC sopravvive al riavvio/chiusura dell'activity.
-        SellerNfcBridge.stop(this)
         val httpLaunchUrl = intent.getParcelableExtra<Uri>(LAUNCH_URL_EXTRA)
         if (httpLaunchUrl?.scheme == "http") {
             // WebViewFallbackActivity accetta solo https; in debug usiamo http locale.
@@ -33,6 +31,16 @@ class PaytoSellerWebViewFallbackActivity : WebViewFallbackActivity() {
             findContentWebView()?.loadUrl(httpLaunchUrl.toString())
         }
         attachSellerBridge()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        SellerNfcBridge.syncPreferredService(this)
+    }
+
+    override fun onPause() {
+        SellerNfcBridge.clearPreferredService(this)
+        super.onPause()
     }
 
     override fun onDestroy() {
