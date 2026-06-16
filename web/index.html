@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#0d3b66">
-  <title>PayTo — Pagamenti</title>
+  <meta name="theme-color" content="#007a4d">
+  <title>RelaxBanking — Demo PayTo</title>
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/icons/client.svg">
   <link rel="stylesheet" href="/style.css">
@@ -15,42 +15,175 @@
     <header class="top-bar">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="6" width="18" height="12" rx="2"/>
-            <path d="M3 10h18"/>
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
           </svg>
         </div>
-        <span class="brand-name">PayTo Pagamenti</span>
+        <div class="brand-text">
+          <span class="brand-name">RelaxBanking</span>
+          <span class="brand-sub">Demo PayTo</span>
+        </div>
       </div>
-      <span class="top-badge">Conto corrente</span>
+      <button type="button" id="btn-notifications" class="icon-btn" aria-label="Notifiche">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+      </button>
     </header>
 
     <section class="account-card">
-      <p class="account-label">Saldo disponibile</p>
-      <p class="balance" id="balance">—</p>
+      <div class="account-card-top">
+        <div>
+          <p class="account-label">Saldo disponibile</p>
+          <p class="balance" id="balance">—</p>
+        </div>
+        <span class="account-type">CC</span>
+      </div>
+      <div class="account-holder">
+        <span class="holder-label">Intestatario</span>
+        <strong id="my-name" class="holder-name">—</strong>
+      </div>
       <div class="iban-row">
         <span class="iban-label">IBAN</span>
         <strong id="my-iban" class="iban-value">—</strong>
-        <button type="button" id="btn-edit-iban" class="btn-link">Cambia IBAN</button>
+        <button type="button" id="btn-edit-iban" class="btn-link">Modifica IBAN</button>
         <p id="iban-status" class="inline-status" aria-live="polite"></p>
       </div>
     </section>
 
     <main id="home" class="screen">
+      <h2 class="section-title">Operazioni rapide</h2>
+      <div class="quick-actions">
+        <button type="button" id="btn-transfer" class="action-tile">
+          <span class="action-icon action-icon-transfer" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M7 17L17 7M17 7H9M17 7v8"/>
+            </svg>
+          </span>
+          <span class="action-label">Bonifico</span>
+          <span class="action-desc">Invia denaro</span>
+        </button>
+        <button type="button" id="btn-request" class="action-tile">
+          <span class="action-icon action-icon-request" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+              <rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM17 17h3v3h-3zM14 20h3"/>
+            </svg>
+          </span>
+          <span class="action-label">Richiedi</span>
+          <span class="action-desc">Genera QR payto://</span>
+        </button>
+      </div>
+
       <div class="info-card">
-        <p class="hint">Installa l'app, poi avvicina il telefono alla cassa del negozio. Si aprirà PayTo con l'importo da pagare.</p>
+        <div class="info-card-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>
+          </svg>
+        </div>
+        <p class="hint">Questa demo mostra come un link <strong>payto://</strong> può aprire l'app bancaria con importo e beneficiario già compilati — come quando scansioni un QR o avvicini il telefono alla cassa.</p>
       </div>
       <p id="home-status" class="status"></p>
     </main>
 
+    <main id="transfer" class="screen" hidden>
+      <div class="screen-header">
+        <button type="button" id="btn-transfer-back" class="back-btn" aria-label="Indietro">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M15 18l-6-6 6-6"/>
+          </svg>
+        </button>
+        <h2 class="screen-title">Nuovo bonifico</h2>
+      </div>
+
+      <form id="transfer-form" class="form-card" novalidate>
+        <div class="field">
+          <label for="tf-iban">IBAN beneficiario</label>
+          <input type="text" id="tf-iban" name="iban" inputmode="text" autocomplete="off"
+                 placeholder="IT60 X054 2811 1010 0000 0123 456" required>
+        </div>
+        <div class="field">
+          <label for="tf-name">Intestatario</label>
+          <input type="text" id="tf-name" name="name" autocomplete="name"
+                 placeholder="Mario Rossi" required>
+        </div>
+        <div class="field">
+          <label for="tf-amount">Importo</label>
+          <div class="amount-input-wrap">
+            <span class="amount-currency">€</span>
+            <input type="text" id="tf-amount" name="amount" inputmode="decimal"
+                   placeholder="0,00" required>
+          </div>
+        </div>
+        <div class="field">
+          <label for="tf-message">Causale</label>
+          <input type="text" id="tf-message" name="message" maxlength="140"
+                 placeholder="Es. Pagamento fattura n. 123">
+        </div>
+        <ul id="transfer-errors" class="errors"></ul>
+        <button type="submit" id="btn-transfer-continue" class="btn btn-primary btn-block">Continua</button>
+      </form>
+    </main>
+
+    <main id="request" class="screen" hidden>
+      <div class="screen-header">
+        <button type="button" id="btn-request-back" class="back-btn" aria-label="Indietro">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M15 18l-6-6 6-6"/>
+          </svg>
+        </button>
+        <h2 class="screen-title">Richiedi pagamento</h2>
+      </div>
+
+      <form id="request-form" class="form-card" novalidate>
+        <p class="form-intro">Genera un QR con link <code>payto://</code> per ricevere un bonifico sul tuo conto.</p>
+        <div class="field">
+          <label for="rf-amount">Importo richiesto</label>
+          <div class="amount-input-wrap">
+            <span class="amount-currency">€</span>
+            <input type="text" id="rf-amount" name="amount" inputmode="decimal"
+                   placeholder="0,00" required>
+          </div>
+        </div>
+        <div class="field">
+          <label for="rf-message">Causale (opzionale)</label>
+          <input type="text" id="rf-message" name="message" maxlength="140"
+                 placeholder="Es. Cena di venerdì">
+        </div>
+        <ul id="request-errors" class="errors"></ul>
+        <button type="submit" id="btn-request-continue" class="btn btn-primary btn-block">Genera QR</button>
+      </form>
+    </main>
+
+    <main id="request-qr" class="screen" hidden>
+      <div class="screen-header">
+        <button type="button" id="btn-request-qr-back" class="back-btn" aria-label="Indietro">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M15 18l-6-6 6-6"/>
+          </svg>
+        </button>
+        <h2 class="screen-title">QR pagamento</h2>
+      </div>
+
+      <div class="qr-card">
+        <p class="qr-amount" id="rq-amount">—</p>
+        <p class="qr-beneficiary" id="rq-beneficiary">—</p>
+        <div id="request-qr" class="qr-canvas" role="img" aria-label="QR code payto"></div>
+        <p class="qr-uri-label">Link payto://</p>
+        <p class="qr-uri" id="rq-uri">—</p>
+        <p class="qr-hint">Chi scansiona il QR aprirà la propria app bancaria con i dati già compilati.</p>
+      </div>
+    </main>
+
     <main id="payment" class="screen payment-screen" hidden>
       <div class="pay-sheet">
-        <p class="pay-prompt">Vuoi effettuare questo pagamento?</p>
+        <p class="pay-prompt">Confermi questo bonifico?</p>
 
         <div class="pay-flow">
           <div class="pay-party pay-party-from">
             <span class="pay-party-label">Da</span>
-            <span class="pay-party-name">Il tuo conto</span>
+            <span class="pay-party-name" id="pay-from-name">Il tuo conto</span>
             <span class="pay-party-iban" id="pay-from-iban">—</span>
           </div>
           <div class="pay-flow-arrow" aria-hidden="true">
@@ -91,7 +224,7 @@
                 <path d="M9 12l2 2 4-4"/>
               </svg>
             </span>
-            Conferma pagamento
+            Conferma bonifico
           </button>
           <button type="button" id="btn-cancel" class="btn btn-pay-cancel">Annulla</button>
         </div>
@@ -101,13 +234,36 @@
     <main id="success" class="screen" hidden>
       <div class="detail-card success-card">
         <div class="success-icon" aria-hidden="true">✓</div>
-        <h2>Pagamento inviato</h2>
+        <h2>Bonifico inviato</h2>
         <p id="success-text"></p>
-        <button type="button" id="btn-done" class="btn btn-primary">Fine</button>
+        <button type="button" id="btn-done" class="btn btn-primary">Torna alla home</button>
       </div>
     </main>
+
+    <nav class="bottom-nav" aria-label="Navigazione principale">
+      <button type="button" id="nav-home" class="nav-item nav-item-active">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        </svg>
+        <span>Home</span>
+      </button>
+      <button type="button" id="nav-transfer" class="nav-item">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M7 17L17 7M17 7H9M17 7v8"/>
+        </svg>
+        <span>Bonifico</span>
+      </button>
+      <button type="button" id="nav-request" class="nav-item">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM17 17h3v3h-3zM14 20h3"/>
+        </svg>
+        <span>Richiedi</span>
+      </button>
+    </nav>
   </div>
   <script src="/pwa-install.js"></script>
-  <script src="/app.js?v=4"></script>
+  <script src="/qr-creator.min.js"></script>
+  <script src="/app.js?v=5"></script>
 </body>
 </html>
