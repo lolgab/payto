@@ -442,9 +442,12 @@ body {
   border: none;
   background: transparent;
   padding-left: 0.35rem;
+  padding-right: 1rem;
   font-size: 1.25rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  text-align: right;
+  flex: 1;
 }
 
 .amount-input-wrap input:focus {

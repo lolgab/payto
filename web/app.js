@@ -117,12 +117,48 @@ function isValidIban(iban) {
   return remainder === 1;
 }
 
-function parseAmountInput(raw) {
-  const s = (raw || '').trim().replace(/\s/g, '').replace(',', '.');
-  if (!s || !/^\d+(\.\d{0,2})?$/.test(s)) return null;
-  const value = Math.round(parseFloat(s) * 100) / 100;
-  if (!Number.isFinite(value) || value <= 0) return null;
-  return value;
+function fmtCentsDigits(c) {
+  return (c / 100).toLocaleString('it-IT', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+const amountCents = { 'tf-amount': 0, 'rf-amount': 0 };
+
+function refreshAmountInput(id) {
+  const el = $(id);
+  if (!el) return;
+  el.value = amountCents[id] ? fmtCentsDigits(amountCents[id]) : '';
+}
+
+function resetAmountInput(id) {
+  amountCents[id] = 0;
+  refreshAmountInput(id);
+}
+
+function amountDigit(id, d) {
+  if (amountCents[id] > 999_999_99) return;
+  amountCents[id] = amountCents[id] * 10 + d;
+  refreshAmountInput(id);
+}
+
+function amountBackspace(id) {
+  amountCents[id] = Math.floor(amountCents[id] / 10);
+  refreshAmountInput(id);
+}
+
+function amountFromField(id) {
+  const c = amountCents[id];
+  if (!c || c <= 0) return null;
+  return c / 100;
+}
+
+function amountFromPaste(id, text) {
+  const digits = (text || '').replace(/\D/g, '');
+  if (!digits) return;
+  amountCents[id] = Math.min(parseInt(digits, 10), 999_999_99);
+  refreshAmountInput(id);
 }
 
 function formatPayAmount(value, currency) {
@@ -371,7 +407,7 @@ function goHome() {
 function validateTransferForm() {
   const iban = normalizeIban($('tf-iban').value);
   const name = ($('tf-name').value || '').trim();
-  const amount = parseAmountInput($('tf-amount').value);
+  const amount = amountFromField('tf-amount');
   const message = ($('tf-message').value || '').trim();
   const errors = [];
 
@@ -410,7 +446,7 @@ function onTransferSubmit(e) {
 // --- Request payment QR ---
 
 function validateRequestForm() {
-  const amount = parseAmountInput($('rf-amount').value);
+  const amount = amountFromField('rf-amount');
   const message = ($('rf-message').value || '').trim();
   const errors = [];
 
@@ -459,6 +495,41 @@ function onRequestSubmit(e) {
   show('request-qr');
 }
 
+function amountFieldFromEvent(e) {
+  const id = e.target?.id;
+  if (id === 'tf-amount' || id === 'rf-amount') return id;
+  const activeId = document.activeElement?.id;
+  if (activeId === 'tf-amount' || activeId === 'rf-amount') return activeId;
+  return null;
+}
+
+function onAmountKeydown(e) {
+  const id = amountFieldFromEvent(e);
+  if (!id) return;
+  if (e.key >= '0' && e.key <= '9') {
+    amountDigit(id, Number(e.key));
+    e.preventDefault();
+  } else if (e.key === 'Backspace' || e.key === 'Delete') {
+    amountBackspace(id);
+    e.preventDefault();
+  } else if (e.key.length === 1 && !e.metaKey && !e.ctrlKey) {
+    e.preventDefault();
+  }
+}
+
+function onAmountPaste(e) {
+  const id = e.target.id;
+  if (id !== 'tf-amount' && id !== 'rf-amount') return;
+  e.preventDefault();
+  amountFromPaste(id, e.clipboardData?.getData('text') || '');
+}
+
+function onAmountInput(e) {
+  const id = e.target.id;
+  if (id !== 'tf-amount' && id !== 'rf-amount') return;
+  refreshAmountInput(id);
+}
+
 function onIbanInput(e) {
   const el = e.target;
   if (el.id !== 'tf-iban') return;
@@ -486,11 +557,13 @@ function onAppClick(e) {
     case 'btn-transfer':
     case 'nav-transfer':
       e.preventDefault();
+      resetAmountInput('tf-amount');
       show('transfer');
       break;
     case 'btn-request':
     case 'nav-request':
       e.preventDefault();
+      resetAmountInput('rf-amount');
       show('request');
       break;
     case 'nav-home':
@@ -557,4 +630,8 @@ document.querySelector('.app').addEventListener('click', onAppClick);
 $('transfer-form')?.addEventListener('submit', onTransferSubmit);
 $('request-form')?.addEventListener('submit', onRequestSubmit);
 document.addEventListener('input', onIbanInput);
+document.addEventListener('input', onAmountInput);
+document.addEventListener('keydown', onAmountKeydown);
+$('tf-amount')?.addEventListener('paste', onAmountPaste);
+$('rf-amount')?.addEventListener('paste', onAmountPaste);
 boot();
