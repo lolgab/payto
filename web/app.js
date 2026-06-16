@@ -55,14 +55,24 @@ function parsePayto(uri) {
   return payment;
 }
 
+function buildPaytoUri({ iban, name, amount, currency, message }) {
+  const params = new URLSearchParams({
+    amount: `${currency || 'EUR'}:${amount.toFixed(2)}`,
+    'receiver-name': name,
+  });
+  if (message) params.set('message', message);
+  return `payto://iban/${iban}?${params}`;
+}
+
 // --- UI ---
 
 const $ = (id) => document.getElementById(id);
-const screens = ['home', 'payment', 'success'];
+const screens = ['home', 'transfer', 'request', 'request-qr', 'payment', 'success'];
 let me = null;
 let appReady = false;
 let paying = false;
 let paymentErrors = [];
+let currentScreen = 'home';
 
 async function apiFetch(url, opts = {}) {
   const ctrl = new AbortController();
@@ -75,8 +85,17 @@ async function apiFetch(url, opts = {}) {
 }
 
 function show(name) {
+  currentScreen = name;
   screens.forEach((s) => { $(s).hidden = s !== name; });
   document.querySelector('.app').classList.toggle('is-paying', name === 'payment');
+  updateNav(name);
+}
+
+function updateNav(name) {
+  const map = { home: 'nav-home', transfer: 'nav-transfer', request: 'nav-request', 'request-qr': 'nav-request' };
+  document.querySelectorAll('.nav-item').forEach((el) => el.classList.remove('nav-item-active'));
+  const active = map[name];
+  if (active) $(active)?.classList.add('nav-item-active');
 }
 
 function normalizeIban(iban) {
@@ -85,6 +104,25 @@ function normalizeIban(iban) {
 
 function fmtIban(iban) {
   return iban ? iban.replace(/(.{4})/g, '$1 ').trim() : '—';
+}
+
+function isValidIban(iban) {
+  if (!/^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$/.test(iban)) return false;
+  const rearranged = iban.slice(4) + iban.slice(0, 4);
+  const numeric = rearranged.replace(/[A-Z]/g, (ch) => (ch.charCodeAt(0) - 55).toString());
+  let remainder = 0;
+  for (const ch of numeric) {
+    remainder = Number(String(remainder) + ch) % 97;
+  }
+  return remainder === 1;
+}
+
+function parseAmountInput(raw) {
+  const s = (raw || '').trim().replace(/\s/g, '').replace(',', '.');
+  if (!s || !/^\d+(\.\d{0,2})?$/.test(s)) return null;
+  const value = Math.round(parseFloat(s) * 100) / 100;
+  if (!Number.isFinite(value) || value <= 0) return null;
+  return value;
 }
 
 function formatPayAmount(value, currency) {
@@ -113,6 +151,12 @@ function fmtMoney(amount, currency) {
   });
 }
 
+function setErrors(elId, errors) {
+  const el = $(elId);
+  if (!el) return;
+  el.innerHTML = errors.map((e) => '<li>' + e + '</li>').join('');
+}
+
 async function loadMe() {
   const res = await apiFetch('/api/me');
   if (!res.ok) throw new Error('Impossibile caricare il conto');
@@ -124,6 +168,7 @@ function refreshMeCard() {
   if (!me) return;
   $('balance').textContent = fmtMoney(me.balance, me.currency);
   $('my-iban').textContent = fmtIban(me.iban);
+  if ($('my-name')) $('my-name').textContent = me.name || '—';
 }
 
 function setIbanStatus(msg, isError = false) {
@@ -172,11 +217,11 @@ async function lookupRecipient(iban) {
 function setOptionalRow(id, value) {
   const row = $(id);
   if (!row) return;
-  const showRow = Boolean(value && value !== '—');
-  row.hidden = !showRow;
+  row.hidden = !(value && value !== '—');
 }
 
 function showPayment(p) {
+  $('pay-from-name').textContent = me?.name || 'Il tuo conto';
   $('pay-from-iban').textContent = me ? fmtIban(me.iban) : '—';
   $('f-iban').textContent = fmtIban(p.iban) || '—';
   $('f-bic').textContent = p.bic || '—';
@@ -222,11 +267,9 @@ function refreshPayButton() {
   if (!btn) return;
   if (!appReady) {
     btn.disabled = true;
-    btn.textContent = 'Caricamento…';
     return;
   }
   if (paying) return;
-  btn.textContent = 'Conferma pagamento';
   btn.disabled = paymentErrors.length > 0;
 }
 
@@ -275,7 +318,8 @@ async function doPay() {
   const btn = $('btn-pay');
   paying = true;
   btn.disabled = true;
-  btn.textContent = 'Invio…';
+  const origHtml = btn.innerHTML;
+  btn.innerHTML = '<span class="btn-pay-icon" aria-hidden="true"></span> Invio…';
 
   try {
     const res = await apiFetch('/api/pay', {
@@ -285,6 +329,7 @@ async function doPay() {
         toIban: p.iban,
         amount: p.amount.value,
         message: p.message || '',
+        receiverName: p.receiverName || '',
       }),
     });
     const data = await res.json();
@@ -296,8 +341,8 @@ async function doPay() {
     $('balance').textContent = fmtMoney(me.balance, me.currency);
     const msg = p.message ? ' — "' + p.message + '"' : '';
     $('success-text').textContent =
-      'Hai inviato ' + p.amount.formatted + ' ' + p.amount.currency +
-      ' a ' + fmtIban(p.iban) + msg + '.';
+      'Hai inviato ' + fmtMoney(p.amount.value, p.amount.currency) +
+      ' a ' + (p.receiverName || fmtIban(p.iban)) + msg + '.';
     show('success');
   } catch (e) {
     const msg = e.name === 'AbortError'
@@ -306,6 +351,7 @@ async function doPay() {
     showPayError(msg);
   } finally {
     paying = false;
+    btn.innerHTML = origHtml;
     refreshPayButton();
   }
 }
@@ -320,13 +366,148 @@ function goHome() {
   history.replaceState(null, '', '/');
 }
 
+// --- Transfer form ---
+
+function validateTransferForm() {
+  const iban = normalizeIban($('tf-iban').value);
+  const name = ($('tf-name').value || '').trim();
+  const amount = parseAmountInput($('tf-amount').value);
+  const message = ($('tf-message').value || '').trim();
+  const errors = [];
+
+  if (!iban) errors.push('Inserisci l\'IBAN del beneficiario');
+  else if (!isValidIban(iban)) errors.push('IBAN non valido');
+  else if (me && iban === me.iban) errors.push('Non puoi inviare denaro a te stesso');
+
+  if (!name) errors.push('Inserisci l\'intestatario');
+  if (!amount) errors.push('Inserisci un importo valido');
+
+  setErrors('transfer-errors', errors);
+  if (errors.length) return null;
+
+  return { iban, name, amount, message, currency: me?.currency || 'EUR' };
+}
+
+function onTransferSubmit(e) {
+  e.preventDefault();
+  const data = validateTransferForm();
+  if (!data) return;
+
+  showPayment({
+    authority: 'iban',
+    iban: data.iban,
+    bic: null,
+    amount: {
+      currency: data.currency,
+      value: data.amount,
+      formatted: data.amount.toFixed(2),
+    },
+    receiverName: data.name,
+    message: data.message || null,
+  });
+}
+
+// --- Request payment QR ---
+
+function validateRequestForm() {
+  const amount = parseAmountInput($('rf-amount').value);
+  const message = ($('rf-message').value || '').trim();
+  const errors = [];
+
+  if (!me) errors.push('Conto non caricato');
+  if (!amount) errors.push('Inserisci un importo valido');
+
+  setErrors('request-errors', errors);
+  if (errors.length) return null;
+
+  return { amount, message };
+}
+
+function renderRequestQr(uri) {
+  const container = $('request-qr');
+  container.innerHTML = '';
+  QrCreator.render(
+    {
+      text: uri,
+      radius: 0.2,
+      ecLevel: 'M',
+      fill: '#005c38',
+      background: '#ffffff',
+      size: 220,
+    },
+    container,
+  );
+}
+
+function onRequestSubmit(e) {
+  e.preventDefault();
+  const data = validateRequestForm();
+  if (!data || !me) return;
+
+  const uri = buildPaytoUri({
+    iban: me.iban,
+    name: me.name,
+    amount: data.amount,
+    currency: me.currency,
+    message: data.message,
+  });
+
+  $('rq-amount').textContent = fmtMoney(data.amount, me.currency);
+  $('rq-beneficiary').textContent = me.name + ' · ' + fmtIban(me.iban);
+  $('rq-uri').textContent = uri;
+  renderRequestQr(uri);
+  show('request-qr');
+}
+
+function onIbanInput(e) {
+  const el = e.target;
+  if (el.id !== 'tf-iban') return;
+  const pos = el.selectionStart;
+  const raw = normalizeIban(el.value);
+  el.value = fmtIban(raw);
+  if (pos != null) el.setSelectionRange(el.value.length, el.value.length);
+
+  if (raw.length >= 15) {
+    lookupRecipient(raw).then((acc) => {
+      if (acc && !$('tf-name').value.trim()) $('tf-name').value = acc.name;
+    });
+  }
+}
+
 function onAppClick(e) {
   const btn = e.target.closest('button');
   if (!btn) return;
+
   switch (btn.id) {
     case 'btn-edit-iban':
       e.preventDefault();
       editMyIban();
+      break;
+    case 'btn-transfer':
+    case 'nav-transfer':
+      e.preventDefault();
+      show('transfer');
+      break;
+    case 'btn-request':
+    case 'nav-request':
+      e.preventDefault();
+      show('request');
+      break;
+    case 'nav-home':
+      e.preventDefault();
+      goHome();
+      break;
+    case 'btn-transfer-back':
+      e.preventDefault();
+      show('home');
+      break;
+    case 'btn-request-back':
+      e.preventDefault();
+      show('home');
+      break;
+    case 'btn-request-qr-back':
+      e.preventDefault();
+      show('request');
       break;
     case 'btn-pay':
       e.preventDefault();
@@ -373,4 +554,7 @@ async function boot() {
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
 document.querySelector('.app').addEventListener('click', onAppClick);
+$('transfer-form')?.addEventListener('submit', onTransferSubmit);
+$('request-form')?.addEventListener('submit', onRequestSubmit);
+document.addEventListener('input', onIbanInput);
 boot();

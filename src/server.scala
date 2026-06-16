@@ -263,15 +263,29 @@ object Main extends IOApp.Simple:
         val amount = jsonNum(body, "amount")
         (fromId, toIban, amount) match
           case (Some(fid), Some(to), Some(amt)) =>
-            (for {
-              from <- loadAccount(db, fid)
-              toAcc <- loadByIban(db, to)
-            } yield (from, toAcc)).flatMap {
-              case (Some(f), Some(t)) => transfer(db, f, t, amt, jsonStr(body, "message").getOrElse(""))
-              case _                    => BadRequest(jsonErr("IBAN destinatario sconosciuto"))
+            val message = jsonStr(body, "message").getOrElse("")
+            val receiverName = jsonStr(body, "receiverName").filter(_.nonEmpty)
+            loadAccount(db, fid).flatMap {
+              case None => BadRequest(jsonErr("Conto mittente non trovato"))
+              case Some(from) =>
+                ensureRecipient(db, to, receiverName).flatMap {
+                  case None => BadRequest(jsonErr("IBAN destinatario non valido"))
+                  case Some(toAcc) => transfer(db, from, toAcc, amt, message)
+                }
             }
           case _ => BadRequest(jsonErr("IBAN destinatario o importo mancante"))
       }
+
+  private def ensureRecipient(db: Db, iban: String, name: Option[String]): IO[Option[Account]] =
+    loadByIban(db, iban).flatMap {
+      case some @ Some(_) => IO.pure(some)
+      case None =>
+        name match
+          case Some(n) if n.nonEmpty =>
+            db.execute(insertAccount, (n, iban, 0.0, "EUR")) >>
+              loadByIban(db, iban)
+          case _ => IO.pure(None)
+    }
 
   private def transfer(db: Db, from: Account, to: Account, amount: Double, message: String): IO[Response[IO]] =
     if amount <= 0 then BadRequest(jsonErr("L'importo deve essere positivo"))
