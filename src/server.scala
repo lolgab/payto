@@ -130,9 +130,6 @@ object Main extends IOApp.Simple:
       case req @ GET -> Root / "api" / "me" =>
         me(db, req)
 
-      case req @ POST -> Root / "api" / "me" / "iban" =>
-        updateMyIban(db, req)
-
       case req @ POST -> Root / "api" / "seller" / "iban" =>
         updateSellerIban(db, req)
 
@@ -215,18 +212,6 @@ object Main extends IOApp.Simple:
                 Ok(s"""{"paid":true,"id":$id,"fromIban":"$from","fromName":"${esc(name)}","amount":$paid}""")
               case None => Ok("""{"paid":false}""")
             }
-        }
-
-  private def updateMyIban(db: Db, req: Request[IO]): IO[Response[IO]] =
-    req.cookies.find(_.name == "account_id").flatMap(_.content.toLongOption) match
-      case None => BadRequest(jsonErr("Nessun conto — ricarica la pagina"))
-      case Some(id) =>
-        req.as[String].flatMap { body =>
-          jsonStr(body, "iban").map(normalizeIban) match
-            case None => BadRequest(jsonErr("Parametro IBAN mancante"))
-            case Some(iban) =>
-              if !Iban.isValidItalian(iban) then BadRequest(jsonErr("IBAN italiano non valido"))
-              else updateIbanForAccount(db, id, iban)
         }
 
   private def updateSellerIban(db: Db, req: Request[IO]): IO[Response[IO]] =
