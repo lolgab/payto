@@ -109,7 +109,8 @@
         <activity
             android:name=".PaytoSellerWebViewFallbackActivity"
             android:configChanges="orientation|screenSize"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/Theme.Payto.WebView" />
 
         <activity
             android:name="com.google.androidbrowserhelper.trusted.FocusActivity"
