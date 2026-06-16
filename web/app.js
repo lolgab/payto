@@ -171,43 +171,6 @@ function refreshMeCard() {
   if ($('my-name')) $('my-name').textContent = me.name || '—';
 }
 
-function setIbanStatus(msg, isError = false) {
-  const el = $('iban-status');
-  if (!el) return;
-  el.textContent = msg || '';
-  el.style.color = isError ? '#dc2626' : '#64748b';
-}
-
-async function editMyIban() {
-  if (!me) return;
-  const input = prompt('Inserisci un IBAN italiano (es. IT60X0542811101000000123456):', me.iban || '');
-  if (input == null) return;
-  const iban = normalizeIban(input);
-  if (!iban) {
-    setIbanStatus('Nessun IBAN inserito', true);
-    return;
-  }
-  setIbanStatus('Aggiornamento in corso…');
-  try {
-    const res = await apiFetch('/api/me/iban', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ iban }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      setIbanStatus(data.error || 'Impossibile aggiornare l\'IBAN', true);
-      return;
-    }
-    me = data;
-    refreshMeCard();
-    if (!window._payment) $('home-status').textContent = '';
-    setIbanStatus('IBAN aggiornato');
-  } catch (e) {
-    setIbanStatus(e.message || 'Errore di rete', true);
-  }
-}
-
 async function lookupRecipient(iban) {
   const res = await apiFetch('/api/account?iban=' + encodeURIComponent(iban));
   if (!res.ok) return null;
@@ -424,7 +387,7 @@ function validateRequestForm() {
 }
 
 function renderRequestQr(uri) {
-  const container = $('request-qr');
+  const container = $('rq-qr');
   container.innerHTML = '';
   QrCreator.render(
     {
@@ -433,7 +396,7 @@ function renderRequestQr(uri) {
       ecLevel: 'M',
       fill: '#005c38',
       background: '#ffffff',
-      size: 220,
+      size: 200,
     },
     container,
   );
@@ -479,10 +442,6 @@ function onAppClick(e) {
   if (!btn) return;
 
   switch (btn.id) {
-    case 'btn-edit-iban':
-      e.preventDefault();
-      editMyIban();
-      break;
     case 'btn-transfer':
     case 'nav-transfer':
       e.preventDefault();

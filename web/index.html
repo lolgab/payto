@@ -47,8 +47,6 @@
       <div class="iban-row">
         <span class="iban-label">IBAN</span>
         <strong id="my-iban" class="iban-value">—</strong>
-        <button type="button" id="btn-edit-iban" class="btn-link">Modifica IBAN</button>
-        <p id="iban-status" class="inline-status" aria-live="polite"></p>
       </div>
     </section>
 
@@ -166,13 +164,14 @@
         <h2 class="screen-title">QR pagamento</h2>
       </div>
 
-      <div class="qr-card">
+      <div class="qr-panel">
         <p class="qr-amount" id="rq-amount">—</p>
         <p class="qr-beneficiary" id="rq-beneficiary">—</p>
-        <div id="request-qr" class="qr-canvas" role="img" aria-label="QR code payto"></div>
-        <p class="qr-uri-label">Link payto://</p>
-        <p class="qr-uri" id="rq-uri">—</p>
-        <p class="qr-hint">Chi scansiona il QR aprirà la propria app bancaria con i dati già compilati.</p>
+        <div class="qr-wrap">
+          <div id="rq-qr" class="qr-canvas" role="img" aria-label="QR code payto"></div>
+        </div>
+        <p class="qr-hint">Scansiona con la fotocamera o apri PayTo</p>
+        <p class="qr-uri" id="rq-uri" hidden>—</p>
       </div>
     </main>
 
