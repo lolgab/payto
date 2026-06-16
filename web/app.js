@@ -424,7 +424,7 @@ function validateRequestForm() {
 }
 
 function renderRequestQr(uri) {
-  const container = $('request-qr');
+  const container = $('request-qr-canvas');
   container.innerHTML = '';
   QrCreator.render(
     {

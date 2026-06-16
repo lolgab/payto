@@ -112,7 +112,7 @@
           <label for="tf-amount">Importo</label>
           <div class="amount-input-wrap">
             <span class="amount-currency">€</span>
-            <input type="text" id="tf-amount" name="amount" inputmode="decimal"
+            <input type="text" id="tf-amount" name="amount" inputmode="numeric" autocomplete="off"
                    placeholder="0,00" required>
           </div>
         </div>
@@ -142,7 +142,7 @@
           <label for="rf-amount">Importo richiesto</label>
           <div class="amount-input-wrap">
             <span class="amount-currency">€</span>
-            <input type="text" id="rf-amount" name="amount" inputmode="decimal"
+            <input type="text" id="rf-amount" name="amount" inputmode="numeric" autocomplete="off"
                    placeholder="0,00" required>
           </div>
         </div>
@@ -169,7 +169,7 @@
       <div class="qr-card">
         <p class="qr-amount" id="rq-amount">—</p>
         <p class="qr-beneficiary" id="rq-beneficiary">—</p>
-        <div id="request-qr" class="qr-canvas" role="img" aria-label="QR code payto"></div>
+        <div id="request-qr-canvas" class="qr-canvas" role="img" aria-label="QR code payto"></div>
         <p class="qr-uri-label">Link payto://</p>
         <p class="qr-uri" id="rq-uri">—</p>
         <p class="qr-hint">Chi scansiona il QR aprirà la propria app bancaria con i dati già compilati.</p>
