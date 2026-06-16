@@ -545,6 +545,18 @@ body {
   pointer-events: none;
 }
 
+.app.is-subscreen .bottom-nav {
+  display: none;
+}
+
+.app.is-subscreen {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.app.is-subscreen .screen {
+  padding-bottom: 1rem;
+}
+
 .payment-screen {
   padding: 0 1rem 1.5rem;
 }

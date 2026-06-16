@@ -87,7 +87,9 @@ async function apiFetch(url, opts = {}) {
 function show(name) {
   currentScreen = name;
   screens.forEach((s) => { $(s).hidden = s !== name; });
-  document.querySelector('.app').classList.toggle('is-paying', name === 'payment');
+  const app = document.querySelector('.app');
+  app.classList.toggle('is-paying', name === 'payment');
+  app.classList.toggle('is-subscreen', name !== 'home');
   updateNav(name);
 }
 
