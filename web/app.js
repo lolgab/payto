@@ -76,6 +76,8 @@ let currentScreen = 'home';
 let incomingPollTimer = null;
 let incomingBaselineId = 0;
 let recentMovements = [];
+let requestNfcActive = false;
+let currentRequestUri = null;
 
 async function apiFetch(url, opts = {}) {
   const ctrl = new AbortController();
@@ -88,6 +90,7 @@ async function apiFetch(url, opts = {}) {
 }
 
 function show(name) {
+  if (name !== 'request-qr') stopRequestNfc();
   currentScreen = name;
   screens.forEach((s) => { $(s).hidden = s !== name; });
   const app = document.querySelector('.app');
@@ -530,8 +533,39 @@ function onRequestSubmit(e) {
   $('rq-amount').textContent = fmtMoney(data.amount, me.currency);
   $('rq-beneficiary').textContent = me.name + ' · ' + fmtIban(me.iban);
   $('rq-uri').textContent = uri;
+  $('rq-nfc-status').textContent = '';
+  $('btn-rq-nfc').textContent = 'Attiva NFC';
+  currentRequestUri = uri;
   renderRequestQr(uri);
   show('request-qr');
+}
+
+function invokeWalletApp(path) {
+  // Navigazione main-frame: in WebView Android il bridge payto-wallet:// viene intercettato nativamente.
+  window.location.href = `payto-wallet://${path}`;
+}
+
+function startRequestNfc() {
+  if (!currentRequestUri || requestNfcActive) return;
+  requestNfcActive = true;
+  $('rq-nfc-status').textContent =
+    'NFC attivo: avvicina un altro telefono per aprire il bonifico payto://';
+  $('btn-rq-nfc').textContent = 'Disattiva NFC';
+  invokeWalletApp('nfc?uri=' + encodeURIComponent(currentRequestUri));
+}
+
+function stopRequestNfc() {
+  if (!requestNfcActive) return;
+  requestNfcActive = false;
+  $('rq-nfc-status').textContent = '';
+  $('btn-rq-nfc').textContent = 'Attiva NFC';
+  invokeWalletApp('nfc-stop');
+}
+
+function toggleRequestNfc() {
+  if (currentScreen !== 'request-qr' || !currentRequestUri) return;
+  if (requestNfcActive) stopRequestNfc();
+  else startRequestNfc();
 }
 
 function onIbanInput(e) {
@@ -579,6 +613,10 @@ function onAppClick(e) {
     case 'btn-request-qr-back':
       e.preventDefault();
       show('request');
+      break;
+    case 'btn-rq-nfc':
+      e.preventDefault();
+      toggleRequestNfc();
       break;
     case 'btn-pay':
       e.preventDefault();
@@ -645,7 +683,13 @@ $('request-form')?.addEventListener('submit', onRequestSubmit);
 document.addEventListener('input', onIbanInput);
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') startIncomingPolling();
-  else stopIncomingPolling();
+  else {
+    stopIncomingPolling();
+    stopRequestNfc();
+  }
 });
-window.addEventListener('pagehide', stopIncomingPolling);
+window.addEventListener('pagehide', () => {
+  stopIncomingPolling();
+  stopRequestNfc();
+});
 boot();

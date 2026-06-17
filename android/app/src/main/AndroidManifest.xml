@@ -105,6 +105,25 @@
             android:launchMode="singleTop"
             android:theme="@style/Theme.Payto.WebView" />
 
+        <!-- Bridge esterno payto-wallet:// per avviare/fermare emulazione NFC HCE. -->
+        <activity
+            android:name=".PaytoNfcBridgeActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="payto-wallet" android:host="nfc" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="payto-wallet" android:host="nfc-stop" />
+            </intent-filter>
+        </activity>
+
         <activity
             android:name="com.google.androidbrowserhelper.trusted.FocusActivity"
             android:exported="false" />

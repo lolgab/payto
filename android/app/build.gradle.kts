@@ -97,6 +97,7 @@ android {
 dependencies {
     implementation("com.google.androidbrowserhelper:androidbrowserhelper:2.6.0")
     implementation("androidx.core:core-ktx:1.15.0")
+    implementation("com.luigivampa92:ndefemulation-android:1.0.0")
 }
 
 tasks.register("printSigningCertSha256") {

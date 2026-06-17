@@ -264,7 +264,7 @@ object Main extends IOApp.Simple:
         }
 
   private def meMovements(db: Db, req: Request[IO]): IO[Response[IO]] =
-    val limit = req.params.get("limit").flatMap(_.toIntOption).map(_.max(1).min(100)).getOrElse(20)
+    val limit = req.params.get("limit").flatMap(_.toIntOption).map(_.max(1).min(100)).getOrElse(20).toLong
     req.cookies.find(_.name == "account_id").flatMap(_.content.toLongOption) match
       case None => BadRequest(jsonErr("Nessun conto — ricarica la pagina"))
       case Some(id) =>
