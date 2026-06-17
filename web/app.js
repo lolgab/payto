@@ -189,7 +189,6 @@ function showPayment(p) {
   $('pay-from-name').textContent = me?.name || 'Il tuo conto';
   $('pay-from-iban').textContent = me ? fmtIban(me.iban) : '—';
   $('f-iban').textContent = fmtIban(p.iban) || '—';
-  $('f-bic').textContent = p.bic || '—';
   $('f-receiver').textContent = p.receiverName || 'Destinatario';
   $('f-message').textContent = p.message || '—';
 
@@ -203,7 +202,6 @@ function showPayment(p) {
     amountEl.textContent = '—';
   }
 
-  setOptionalRow('row-bic', p.bic);
   setOptionalRow('row-message', p.message);
 
   const errors = [];
