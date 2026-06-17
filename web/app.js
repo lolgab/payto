@@ -69,6 +69,10 @@ function buildPaytoUri({ iban, name, amount, currency, message }) {
 // --- UI ---
 
 const $ = (id) => document.getElementById(id);
+const setTextIfPresent = (id, text) => {
+  const el = $(id);
+  if (el) el.textContent = text;
+};
 const screens = ['home', 'transfer', 'request', 'request-qr', 'payment', 'success', 'incoming'];
 let me = null;
 let appReady = false;
@@ -133,6 +137,16 @@ function parseAmountInput(raw) {
   const value = Math.round(parseFloat(s) * 100) / 100;
   if (!Number.isFinite(value) || value <= 0) return null;
   return value;
+}
+
+function formatAmountFromDigits(raw) {
+  const digits = String(raw || '').replace(/\D/g, '');
+  if (!digits) return '';
+  const cents = parseInt(digits, 10);
+  if (!Number.isFinite(cents)) return '';
+  const euros = Math.floor(cents / 100).toString();
+  const decimals = String(cents % 100).padStart(2, '0');
+  return euros + ',' + decimals;
 }
 
 function formatPayAmount(value, currency) {
@@ -535,8 +549,8 @@ function onRequestSubmit(e) {
   $('rq-amount').textContent = fmtMoney(data.amount, me.currency);
   $('rq-beneficiary').textContent = me.name + ' · ' + fmtIban(me.iban);
   $('rq-uri').textContent = uri;
-  $('rq-nfc-status').textContent = '';
-  $('btn-rq-nfc').textContent = 'Attiva NFC';
+  setTextIfPresent('rq-nfc-status', '');
+  setTextIfPresent('btn-rq-nfc', 'Attiva NFC');
   currentRequestUri = uri;
   renderRequestQr(uri);
   show('request-qr');
@@ -550,17 +564,19 @@ function invokeWalletApp(path) {
 function startRequestNfc() {
   if (!currentRequestUri || requestNfcActive) return;
   requestNfcActive = true;
-  $('rq-nfc-status').textContent =
-    'NFC attivo: avvicina un altro telefono per aprire il bonifico payto://';
-  $('btn-rq-nfc').textContent = 'Disattiva NFC';
+  setTextIfPresent(
+    'rq-nfc-status',
+    'NFC attivo: avvicina un altro telefono per aprire il bonifico payto://',
+  );
+  setTextIfPresent('btn-rq-nfc', 'Disattiva NFC');
   invokeWalletApp('nfc?uri=' + encodeURIComponent(currentRequestUri));
 }
 
 function stopRequestNfc() {
   if (!requestNfcActive) return;
   requestNfcActive = false;
-  $('rq-nfc-status').textContent = '';
-  $('btn-rq-nfc').textContent = 'Attiva NFC';
+  setTextIfPresent('rq-nfc-status', '');
+  setTextIfPresent('btn-rq-nfc', 'Attiva NFC');
   invokeWalletApp('nfc-stop');
 }
 
@@ -572,16 +588,27 @@ function toggleRequestNfc() {
 
 function onIbanInput(e) {
   const el = e.target;
-  if (el.id !== 'tf-iban') return;
-  const pos = el.selectionStart;
-  const raw = normalizeIban(el.value);
-  el.value = fmtIban(raw);
-  if (pos != null) el.setSelectionRange(el.value.length, el.value.length);
+  if (el.id === 'tf-iban') {
+    const pos = el.selectionStart;
+    const raw = normalizeIban(el.value);
+    el.value = fmtIban(raw);
+    if (pos != null) el.setSelectionRange(el.value.length, el.value.length);
 
-  if (raw.length >= 15) {
-    lookupRecipient(raw).then((acc) => {
-      if (acc && !$('tf-name').value.trim()) $('tf-name').value = acc.name;
-    });
+    if (raw.length >= 15) {
+      lookupRecipient(raw).then((acc) => {
+        if (acc && !$('tf-name').value.trim()) $('tf-name').value = acc.name;
+      });
+    }
+    return;
+  }
+
+  if (el.id === 'tf-amount' || el.id === 'rf-amount') {
+    const formatted = formatAmountFromDigits(el.value);
+    el.value = formatted;
+    if (document.activeElement === el) {
+      const end = el.value.length;
+      el.setSelectionRange(end, end);
+    }
   }
 }
 
