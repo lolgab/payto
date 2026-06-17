@@ -65,6 +65,32 @@ object Main extends IOApp.Simple:
           order by t.id asc limit 1"""
       .query(integer *: text *: real *: text *: nil)
 
+  private val maxTransferIdToIban =
+    sql"select coalesce(max(id), 0) from transfers where to_iban = $text".query(integer)
+
+  private val findIncomingAfter =
+    sql"""select t.id, t.from_iban, t.amount, coalesce(a.name, ''), coalesce(t.message, '')
+          from transfers t
+          left join accounts a on a.iban = t.from_iban
+          where t.to_iban = $text and t.id > $integer
+          order by t.id asc limit 1"""
+      .query(integer *: text *: real *: text *: text *: nil)
+
+  private val recentMovementsForIban =
+    sql"""select t.id,
+                 t.created_at,
+                 case when t.from_iban = $text then 'OUT' else 'IN' end as direction,
+                 t.amount,
+                 coalesce(t.message, '') as message,
+                 case when t.from_iban = $text then t.to_iban else t.from_iban end as counterparty_iban,
+                 coalesce(a.name, '') as counterparty_name
+          from transfers t
+          left join accounts a on a.iban = case when t.from_iban = $text then t.to_iban else t.from_iban end
+          where t.from_iban = $text or t.to_iban = $text
+          order by t.id desc
+          limit $integer"""
+      .query(integer *: text *: text *: real *: text *: text *: text *: nil)
+
   def run: IO[Unit] =
     Database.open[IO]("data/payto.db").use { db =>
       initDb(db) >> startServer(db)
@@ -130,6 +156,15 @@ object Main extends IOApp.Simple:
       case req @ GET -> Root / "api" / "me" =>
         me(db, req)
 
+      case req @ GET -> Root / "api" / "me" / "baseline" =>
+        meBaseline(db, req)
+
+      case req @ GET -> Root / "api" / "me" / "incoming" =>
+        meIncoming(db, req)
+
+      case req @ GET -> Root / "api" / "me" / "movements" =>
+        meMovements(db, req)
+
       case req @ POST -> Root / "api" / "seller" / "iban" =>
         updateSellerIban(db, req)
 
@@ -191,6 +226,59 @@ object Main extends IOApp.Simple:
           }
         case _ => InternalServerError("Impossibile creare il conto")
       }
+
+  private def meBaseline(db: Db, req: Request[IO]): IO[Response[IO]] =
+    req.cookies.find(_.name == "account_id").flatMap(_.content.toLongOption) match
+      case None => BadRequest(jsonErr("Nessun conto — ricarica la pagina"))
+      case Some(id) =>
+        loadAccount(db, id).flatMap {
+          case None => BadRequest(jsonErr("Conto non trovato"))
+          case Some(acc) =>
+            db.execute(maxTransferIdToIban, acc.iban).flatMap {
+              case transferId :: Nil => Ok(s"""{"lastId":$transferId}""")
+              case _                 => InternalServerError(jsonErr("Impossibile leggere lo stato dei bonifici"))
+            }
+        }
+
+  private def meIncoming(db: Db, req: Request[IO]): IO[Response[IO]] =
+    val after = req.params.get("after").flatMap(_.toLongOption).getOrElse(0L)
+    req.cookies.find(_.name == "account_id").flatMap(_.content.toLongOption) match
+      case None => BadRequest(jsonErr("Nessun conto — ricarica la pagina"))
+      case Some(id) =>
+        loadAccount(db, id).flatMap {
+          case None => BadRequest(jsonErr("Conto non trovato"))
+          case Some(acc) =>
+            db.option(findIncomingAfter, (acc.iban, after)).flatMap {
+              case Some((transferId, fromIban, amount, fromName, message)) =>
+                loadAccount(db, id).flatMap {
+                  case Some(currentAcc) =>
+                    Ok(
+                      s"""{"paid":true,"id":$transferId,"fromIban":"${esc(fromIban)}","fromName":"${esc(fromName)}","amount":$amount,"message":"${esc(message)}","balance":${currentAcc.balance},"currency":"${currentAcc.currency}"}"""
+                    )
+                  case None =>
+                    InternalServerError(jsonErr("Conto non trovato"))
+                }
+              case None =>
+                Ok("""{"paid":false}""")
+            }
+        }
+
+  private def meMovements(db: Db, req: Request[IO]): IO[Response[IO]] =
+    val limit = req.params.get("limit").flatMap(_.toIntOption).map(_.max(1).min(100)).getOrElse(20)
+    req.cookies.find(_.name == "account_id").flatMap(_.content.toLongOption) match
+      case None => BadRequest(jsonErr("Nessun conto — ricarica la pagina"))
+      case Some(id) =>
+        loadAccount(db, id).flatMap {
+          case None => BadRequest(jsonErr("Conto non trovato"))
+          case Some(acc) =>
+            db.execute(recentMovementsForIban, (acc.iban, acc.iban, acc.iban, acc.iban, acc.iban, limit)).flatMap { rows =>
+              val movements = rows.map {
+                case (transferId, createdAt, direction, amount, message, counterpartyIban, counterpartyName) =>
+                  s"""{"id":$transferId,"createdAt":"${esc(createdAt)}","direction":"$direction","amount":$amount,"message":"${esc(message)}","counterpartyIban":"${esc(counterpartyIban)}","counterpartyName":"${esc(counterpartyName)}"}"""
+              }.mkString(",")
+              Ok(s"""{"movements":[$movements],"currency":"${acc.currency}"}""")
+            }
+        }
 
   private def lookup(db: Db, iban: String): IO[Response[IO]] =
     val normalized = iban.replace(" ", "").toUpperCase

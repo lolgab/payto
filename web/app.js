@@ -67,12 +67,15 @@ function buildPaytoUri({ iban, name, amount, currency, message }) {
 // --- UI ---
 
 const $ = (id) => document.getElementById(id);
-const screens = ['home', 'transfer', 'request', 'request-qr', 'payment', 'success'];
+const screens = ['home', 'transfer', 'request', 'request-qr', 'payment', 'success', 'incoming'];
 let me = null;
 let appReady = false;
 let paying = false;
 let paymentErrors = [];
 let currentScreen = 'home';
+let incomingPollTimer = null;
+let incomingBaselineId = 0;
+let recentMovements = [];
 
 async function apiFetch(url, opts = {}) {
   const ctrl = new AbortController();
@@ -153,6 +156,26 @@ function fmtMoney(amount, currency) {
   });
 }
 
+function escHtml(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function fmtMovementDate(raw) {
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return raw || '';
+  return new Intl.DateTimeFormat('it-IT', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(d);
+}
+
 function setErrors(elId, errors) {
   const el = $(elId);
   if (!el) return;
@@ -171,6 +194,94 @@ function refreshMeCard() {
   $('balance').textContent = fmtMoney(me.balance, me.currency);
   $('my-iban').textContent = fmtIban(me.iban);
   if ($('my-name')) $('my-name').textContent = me.name || '—';
+}
+
+function renderMovements() {
+  const list = $('movement-list');
+  const empty = $('movement-empty');
+  if (!list || !empty) return;
+
+  if (!recentMovements.length) {
+    list.innerHTML = '';
+    empty.hidden = false;
+    return;
+  }
+
+  empty.hidden = true;
+  list.innerHTML = recentMovements.map((mov) => {
+    const incoming = mov.direction === 'IN';
+    const title = mov.counterpartyName || fmtIban(mov.counterpartyIban);
+    const metaParts = [incoming ? 'Bonifico ricevuto' : 'Bonifico inviato', fmtMovementDate(mov.createdAt)];
+    if (mov.message) metaParts.push(mov.message);
+    const amount = fmtMoney(mov.amount, me?.currency || 'EUR');
+    const signedAmount = incoming ? '+ ' + amount : '- ' + amount;
+    return (
+      '<li class="movement-item">' +
+        '<div class="movement-main">' +
+          '<p class="movement-title">' + escHtml(title) + '</p>' +
+          '<p class="movement-meta">' + escHtml(metaParts.join(' · ')) + '</p>' +
+        '</div>' +
+        '<span class="movement-amount ' + (incoming ? 'movement-amount-in' : 'movement-amount-out') + '">' +
+          escHtml(signedAmount) +
+        '</span>' +
+      '</li>'
+    );
+  }).join('');
+}
+
+async function loadMovements() {
+  const res = await apiFetch('/api/me/movements?limit=12');
+  if (!res.ok) throw new Error('Impossibile caricare i movimenti');
+  const data = await res.json();
+  recentMovements = Array.isArray(data.movements) ? data.movements : [];
+  renderMovements();
+}
+
+async function loadIncomingBaseline() {
+  const res = await apiFetch('/api/me/baseline');
+  if (!res.ok) throw new Error('Impossibile leggere lo stato dei bonifici');
+  const data = await res.json();
+  return Number(data.lastId) || 0;
+}
+
+async function checkIncomingTransfer() {
+  if (!appReady || paying) return;
+  const res = await apiFetch('/api/me/incoming?after=' + incomingBaselineId);
+  if (!res.ok) return;
+  const data = await res.json();
+  if (!data.paid) return;
+  incomingBaselineId = Number(data.id) || incomingBaselineId;
+  showIncomingTransfer(data);
+}
+
+function stopIncomingPolling() {
+  if (!incomingPollTimer) return;
+  clearInterval(incomingPollTimer);
+  incomingPollTimer = null;
+}
+
+function startIncomingPolling() {
+  stopIncomingPolling();
+  incomingPollTimer = setInterval(() => {
+    checkIncomingTransfer().catch(() => {});
+  }, 1500);
+  checkIncomingTransfer().catch(() => {});
+}
+
+function showIncomingTransfer(data) {
+  if (me) {
+    const nextBalance = Number(data.balance);
+    if (Number.isFinite(nextBalance)) me.balance = nextBalance;
+    me.currency = data.currency || me.currency || 'EUR';
+    refreshMeCard();
+  }
+  $('incoming-amount').textContent = fmtMoney(data.amount, data.currency || me?.currency || 'EUR');
+  $('incoming-from-name').textContent = data.fromName || 'Mittente sconosciuto';
+  $('incoming-from-iban').textContent = data.fromIban ? fmtIban(data.fromIban) : '—';
+  $('incoming-message-row').hidden = !data.message;
+  $('incoming-message').textContent = data.message || '';
+  loadMovements().catch(() => {});
+  show('incoming');
 }
 
 async function lookupRecipient(iban) {
@@ -302,6 +413,7 @@ async function doPay() {
     }
     me.balance = data.balance;
     $('balance').textContent = fmtMoney(me.balance, me.currency);
+    await loadMovements().catch(() => {});
     const msg = p.message ? ' — "' + p.message + '"' : '';
     $('success-text').textContent =
       'Hai inviato ' + fmtMoney(p.amount.value, p.amount.currency) +
@@ -474,6 +586,7 @@ function onAppClick(e) {
       break;
     case 'btn-cancel':
     case 'btn-done':
+    case 'btn-incoming-done':
       goHome();
       break;
   }
@@ -504,7 +617,21 @@ async function boot() {
     }
   }
 
+  try {
+    await loadMovements();
+  } catch (_) {
+    recentMovements = [];
+    renderMovements();
+  }
+
+  try {
+    incomingBaselineId = await loadIncomingBaseline();
+  } catch (_) {
+    incomingBaselineId = 0;
+  }
+
   appReady = true;
+  startIncomingPolling();
   if (window._payment) showPayment(window._payment);
   refreshPayButton();
 }
@@ -516,4 +643,9 @@ document.querySelector('.app').addEventListener('click', onAppClick);
 $('transfer-form')?.addEventListener('submit', onTransferSubmit);
 $('request-form')?.addEventListener('submit', onRequestSubmit);
 document.addEventListener('input', onIbanInput);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') startIncomingPolling();
+  else stopIncomingPolling();
+});
+window.addEventListener('pagehide', stopIncomingPolling);
 boot();

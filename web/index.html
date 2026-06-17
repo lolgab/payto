@@ -74,6 +74,12 @@
         </button>
       </div>
 
+      <h2 class="section-title">Movimenti</h2>
+      <section class="movements-card" aria-live="polite">
+        <ul id="movement-list" class="movement-list"></ul>
+        <p id="movement-empty" class="movement-empty">Nessun movimento recente.</p>
+      </section>
+
       <div class="info-card">
         <div class="info-card-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
@@ -235,6 +241,18 @@
       </div>
     </main>
 
+    <main id="incoming" class="screen" hidden>
+      <div class="detail-card success-card">
+        <div class="success-icon" aria-hidden="true">✓</div>
+        <h2>Bonifico ricevuto</h2>
+        <p><strong id="incoming-amount">—</strong></p>
+        <p>Da <span id="incoming-from-name">—</span></p>
+        <p id="incoming-from-iban">—</p>
+        <p id="incoming-message-row" hidden>Causale: <span id="incoming-message"></span></p>
+        <button type="button" id="btn-incoming-done" class="btn btn-primary">Torna alla home</button>
+      </div>
+    </main>
+
     <nav class="bottom-nav" aria-label="Navigazione principale">
       <button type="button" id="nav-home" class="nav-item nav-item-active">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
@@ -259,6 +277,6 @@
   </div>
   <script src="/pwa-install.js"></script>
   <script src="/qr-creator.min.js"></script>
-  <script src="/app.js?v=6"></script>
+  <script src="/app.js?v=8"></script>
 </body>
 </html>
