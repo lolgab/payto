@@ -56,12 +56,14 @@ function parsePayto(uri) {
 }
 
 function buildPaytoUri({ iban, name, amount, currency, message }) {
-  const params = new URLSearchParams({
-    amount: `${currency || 'EUR'}:${amount.toFixed(2)}`,
-    'receiver-name': name,
-  });
-  if (message) params.set('message', message);
-  return `payto://iban/${iban}?${params}`;
+  const query = [
+    ['amount', `${currency || 'EUR'}:${amount.toFixed(2)}`],
+    ['receiver-name', name],
+    ...(message ? [['message', message]] : []),
+  ]
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+    .join('&');
+  return `payto://iban/${iban}?${query}`;
 }
 
 // --- UI ---

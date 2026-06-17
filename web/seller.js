@@ -68,11 +68,13 @@ function clearAmount() {
 }
 
 function buildPaytoUri(amount) {
-  const params = new URLSearchParams({
-    amount: `${seller.currency}:${amount.toFixed(2)}`,
-    'receiver-name': seller.name,
-  });
-  return `payto://iban/${seller.iban}?${params}`;
+  const query = [
+    ['amount', `${seller.currency}:${amount.toFixed(2)}`],
+    ['receiver-name', seller.name],
+  ]
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+    .join('&');
+  return `payto://iban/${seller.iban}?${query}`;
 }
 
 function renderPaymentQr(uri) {
