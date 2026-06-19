@@ -5,7 +5,10 @@
     <style name="Theme.Payto.WebView" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:statusBarColor">@color/statusBar</item>
         <item name="android:navigationBarColor">@color/navigationBar</item>
+        <item name="android:windowBackground">@color/webViewBackground</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">true</item>
         <item name="android:windowOptOutEdgeToEdgeEnforcement" tools:targetApi="35">true</item>
     </style>
 

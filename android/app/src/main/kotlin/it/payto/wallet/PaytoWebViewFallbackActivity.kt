@@ -25,6 +25,7 @@ class PaytoWebViewFallbackActivity : WebViewFallbackActivity() {
         }
         super.onCreate(savedInstanceState)
         configureSystemBars()
+        configureWebView()
         if (httpLaunchUrl?.scheme == "http") {
             findContentWebView()?.loadUrl(httpLaunchUrl.toString())
         }
@@ -80,6 +81,10 @@ class PaytoWebViewFallbackActivity : WebViewFallbackActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, true)
         window.statusBarColor = getColor(R.color.statusBar)
         window.navigationBarColor = getColor(R.color.navigationBar)
+    }
+
+    private fun configureWebView() {
+        findContentWebView()?.setBackgroundColor(getColor(R.color.webViewBackground))
     }
 
     private fun findContentWebView(): WebView? {
